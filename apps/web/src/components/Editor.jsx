@@ -9,9 +9,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useEditor, EditorContent } from '@tiptap/react'
+import { Extension } from '@tiptap/core'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { createMoodEngine } from '../lib/moods.js'
 import { COLORS } from '../lib/identity.js'
 import StarterKit from '@tiptap/starter-kit'
+import Paragraph from '@tiptap/extension-paragraph'
 import Collaboration from '@tiptap/extension-collaboration'
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
 import Highlight from '@tiptap/extension-highlight'
@@ -21,13 +24,72 @@ import Placeholder from '@tiptap/extension-placeholder'
 
 import Toolbar from './Toolbar.jsx'
 
+// 👤 Authorship: every paragraph remembers who LAST typed in it. The name
+// lives in a node attribute → it travels inside the CRDT itself, so it syncs
+// live, persists across reloads, and even shows up in rewind snapshots.
+// (Same trick Google Docs uses for suggestion attribution.)
+const AuthorParagraph = Paragraph.extend({
+  addAttributes() {
+    return {
+      author: {
+        default: null,
+        parseHTML: (el) => el.getAttribute('data-author') || null,
+        renderHTML: (attrs) => (attrs.author ? { 'data-author': attrs.author } : {}),
+      },
+    }
+  },
+})
+
+// Stamping runs as a ProseMirror appendTransaction, NOT an editor 'update'
+// listener: 'update' also fires for REMOTE sync transactions, whose caret
+// would re-claim paragraphs nobody typed in (chips would lie on every reload).
+// y-prosemirror tags remote-origin transactions with the 'y-sync$' meta, so
+// only genuine local edits (typing/paste in THIS browser) claim a line.
+const AuthorStamp = Extension.create({
+  name: 'authorStamp',
+  addOptions() {
+    return { getName: () => null }
+  },
+  addProseMirrorPlugins() {
+    const { getName } = this.options
+    return [
+      new Plugin({
+        key: new PluginKey('syncpad-author-stamp'),
+        appendTransaction(trs, _old, state) {
+          const typed = trs.some(
+            (tr) => tr.docChanged && !tr.getMeta('y-sync$')?.isChangeOrigin,
+          )
+          if (!typed) return
+          const name = getName()
+          if (!name) return
+          const { $head } = state.selection
+          const parent = $head.parent
+          if (!parent.type.spec.attrs?.author) return // only AuthorParagraph has it
+          if (parent.attrs.author === name) return // already mine — no churn
+          return state.tr.setNodeMarkup($head.before(), undefined, {
+            ...parent.attrs,
+            author: name,
+          })
+        },
+      }),
+    ]
+  },
+})
+
 export default function Editor({ ydoc, provider, identity, readOnly = false, onMood, active = true }) {
+  // live identity for the stamp plugin (renames / claims apply without re-creating the editor)
+  const identityRef = useRef(identity)
+  identityRef.current = identity
+
   const editor = useEditor({
     editable: !readOnly,
     extensions: [
       StarterKit.configure({
         history: false, // CRDT handles undo/redo per-user
+        paragraph: false, // replaced by AuthorParagraph below
       }),
+      AuthorParagraph,
+      AuthorStamp.configure({ getName: () => identityRef.current?.name }),
       Highlight,
       TaskList,
       TaskItem.configure({ nested: true }),

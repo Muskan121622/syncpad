@@ -19,7 +19,25 @@ import { useEffect, useRef, useState } from 'react'
 const RTC_CONFIG = {
   iceServers: [
     { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+    // 🆘 Free public TURN relay (OpenRelay/Metered). STUN only DISCOVERS a
+    // direct path; when both laptops sit behind symmetric NAT or an
+    // AP-isolating router (very common on Indian ISPs), there IS no direct
+    // path — without this relay entry the call silently connects to nothing:
+    // tiles dark, no audio, while CRDT text keeps syncing happily.
+    {
+      urls: [
+        'turn:global.relay.metered.ca:80',
+        'turn:global.relay.metered.ca:80?transport=tcp',
+        'turn:global.relay.metered.ca:443',
+        'turn:global.relay.metered.ca:443?transport=tcp',
+      ],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
   ],
+  // Gather relay candidates BEFORE the one-shot SDP is written to the CRDT —
+  // with TURN in play, 3.5s was too tight and shipped SDP without the relay.
+  iceCandidatePoolSize: 4,
 }
 
 // resolve once ICE candidates are baked into the SDP (or after a safety wait)
@@ -33,7 +51,7 @@ function gatheringDone(pc) {
       }
     }
     pc.addEventListener('icegatheringstatechange', check)
-    setTimeout(res, 3500)
+    setTimeout(res, 8000)
   })
 }
 
@@ -47,6 +65,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   const screenStream = useRef(null)
   const pcs = useRef(new Map()) // peerId -> RTCPeerConnection
   const streams = useRef(new Map()) // peerId -> MediaStream (for tile <video> src)
+  const retries = useRef(new Map()) // peerId -> re-offer attempts (anti-loop)
   const selfRef = useRef(null)
   const started = useRef(false)
 
@@ -115,6 +134,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     pcs.current.get(id)?.close()
     pcs.current.delete(id)
     streams.current.delete(id)
+    retries.current.delete(id)
     setParts((p) => {
       const n = { ...p }
       delete n[id]
@@ -126,6 +146,22 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     }
   }
 
+  // ── attach a peer's stored stream to its tile (idempotent) ───────────────
+  // Called from ontrack AND from the tile's ref callback, so the stream finds
+  // its <video> element no matter which one finished mounting first.
+  function attachVideo(peerId) {
+    const stream = streams.current.get(peerId)
+    const el = document.querySelector(`video[data-peer="${peerId}"]`)
+    if (!stream || !el) return
+    if (el.srcObject !== stream) el.srcObject = stream
+    // Autoplay with audio can still be rejected until a real user gesture —
+    // muted fallback keeps the PICTURE alive; the tile tap unmutes below.
+    el.play().catch(() => {
+      el.muted = true
+      el.play().catch(() => {})
+    })
+  }
+
   // ── negotiation ──────────────────────────────────────────────────────────
   function ensurePc(peerId) {
     let pc = pcs.current.get(peerId)
@@ -133,15 +169,30 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     pc = new RTCPeerConnection(RTC_CONFIG)
     pcs.current.set(peerId, pc)
     pc.ontrack = (e) => {
+      // ALWAYS store first, attach if lucky: the remote tile's <video> may not
+      // be mounted yet (peer joined a beat before React rendered it) — the
+      // videoRef callback below replays the stream the moment it appears.
+      // Without this the tile stayed dark forever even with media flowing.
       streams.current.set(peerId, e.streams[0])
-      const el = document.querySelector(`video[data-peer="${peerId}"]`)
-      if (el) el.srcObject = e.streams[0]
+      attachVideo(peerId)
     }
     pc.onconnectionstatechange = () => {
       if (['failed', 'disconnected'].includes(pc.connectionState)) {
-        // one polite restart; if still dead they'll re-offer on reappearance
+        // Drop the dead pc; if the peer is still in the call, the smaller-id
+        // side re-offers once (TURN already had its chance by "failed").
         pcs.current.delete(peerId)
         pc.close()
+        if (
+          pc.connectionState === 'failed' &&
+          myClientId < peerId &&
+          call.has(`p:${peerId}`) &&
+          (retries.current.get(peerId) || 0) < 2
+        ) {
+          retries.current.set(peerId, (retries.current.get(peerId) || 0) + 1)
+          setTimeout(() => {
+            if (call.has(`p:${peerId}`) && !pcs.current.has(peerId)) sendOffer(peerId)
+          }, 3000)
+        }
       }
     }
     localStream.current?.getTracks().forEach((t) => pc.addTrack(t, localStream.current))
@@ -323,7 +374,18 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
           const p = parts[id]
           return (
             <div key={id} className={`call-tile${p.cam ? '' : ' is-camoff'}${p.share ? ' is-sharing' : ''}`}>
-              <video data-peer={id} autoPlay playsInline />
+              <video
+                data-peer={id}
+                autoPlay
+                playsInline
+                ref={(el) => el && attachVideo(Number(id))}
+                onClick={(e) => {
+                  // autoplay-with-audio may have muted us — tap gives sound back
+                  const v = e.currentTarget
+                  v.muted = false
+                  v.play().catch(() => {})
+                }}
+              />
               <span className="call-name">
                 {p.emoji} {p.name}
                 {p.share ? ' · 🖥 screen' : ''}

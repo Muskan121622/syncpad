@@ -4,3 +4,6 @@ apps/server/data/
 .tmp-deploytest/
 *.log
 .DS_Store
+.vercel
+.vercel-tmp/
+.env*
