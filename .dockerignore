@@ -1,0 +1,21 @@
+# Keep the build context tiny and reproducible.
+# NOTE: apps/web/package.json must stay in the context — `npm ci -w` resolves
+# the whole workspace tree, so the manifest has to exist even though no web
+# source does. Hence these targeted ignores instead of a blanket apps/web.
+node_modules
+**/node_modules
+.git
+.gitignore
+apps/web/src
+apps/web/dist
+apps/web/index.html
+dist
+**/dist
+apps/server/data
+.tmp-deploytest
+*.log
+.DS_Store
+e2e-*.png
+vercel.json
+fly.toml
+railway.toml

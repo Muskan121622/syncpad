@@ -1,0 +1,17 @@
+{
+  "name": "@syncpad/server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@hocuspocus/extension-redis": "^2.15.0",
+    "@hocuspocus/server": "^2.15.0",
+    "ioredis": "^5.4.1",
+    "yjs": "^13.6.20"
+  }
+}

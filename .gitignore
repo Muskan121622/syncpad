@@ -1,0 +1,6 @@
+node_modules/
+dist/
+apps/server/data/
+.tmp-deploytest/
+*.log
+.DS_Store

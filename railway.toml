@@ -1,0 +1,16 @@
+# SyncPad realtime backend on Railway (alternative to Fly.io — same Dockerfile).
+# Railway injects PORT; the image's CMD/ENTRYPOINT (tini + node) is respected,
+# so no startCommand here on purpose — overriding it would skip tini.
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "apps/server/Dockerfile"
+
+[deploy]
+# SINGLE_PORT puts the REST API on the same port as the websocket, which is
+# exactly what Railway exposes. DATA_DIR stays ephemeral here: attach a Railway
+# volume at /data if you want pads to survive a redeploy.
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+healthcheckPath = "/health"
+healthcheckTimeout = 300
