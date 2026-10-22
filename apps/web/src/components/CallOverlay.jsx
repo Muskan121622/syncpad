@@ -40,6 +40,24 @@ const RTC_CONFIG = {
   iceCandidatePoolSize: 4,
 }
 
+// 🧭 call-tracer: every step lands in window.__callLog with a +ms stamp, and
+// window.copyCallLog() puts the whole trace on the clipboard so a friend on a
+// different network can literally paste "where did the call die". Kept OUT of
+// React state — logs must survive re-renders and cost nothing.
+const LOG = (globalThis.__callLog ??= [])
+const t0 = Date.now()
+function dbg(...args) {
+  const line = `+${((Date.now() - t0) / 1000).toFixed(1)}s [call] ${args.join(' ')}`
+  LOG.push(line)
+  console.log(`%c🎥 ${line}`, 'color:#8b7cf6')
+}
+dbg(`boot: room=${(location.href.match(/\/r\/([a-z0-9]+)/i) || [])[1] ?? '?'} ua=${navigator.userAgent.slice(0, 60)}`)
+globalThis.copyCallLog = async () => {
+  await navigator.clipboard.writeText(LOG.join('\n'))
+  console.log('📋 full call trace copied — paste it in chat')
+  return LOG.length
+}
+
 // resolve once ICE candidates are baked into the SDP (or after a safety wait)
 function gatheringDone(pc) {
   if (pc.iceGatheringState === 'complete') return Promise.resolve()
@@ -51,12 +69,16 @@ function gatheringDone(pc) {
       }
     }
     pc.addEventListener('icegatheringstatechange', check)
-    setTimeout(res, 8000)
+    setTimeout(() => {
+      dbg('⚠ gathering SAFETY timeout hit — shipping SDP as-is')
+      res()
+    }, 8000)
   })
 }
 
 export default function CallOverlay({ call, identity, myClientId, onlineIds, onLeave }) {
   const [parts, setParts] = useState({}) // clientId -> info
+  const [diag, setDiag] = useState({}) // peerId -> { conn, path } — tile badge
   const [streamErr, setStreamErr] = useState(null)
   const [micOn, setMicOn] = useState(true)
   const [camOn, setCamOn] = useState(true)
@@ -73,16 +95,21 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   useEffect(() => {
     let dead = false
     async function grab() {
+      dbg(`media: requesting cam+mic (myId=${myClientId})`)
       try {
         localStream.current = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 640 } },
           audio: { echoCancellation: true, noiseSuppression: true },
         })
-      } catch {
+        dbg(`media: OK cam+mic — tracks=${localStream.current.getTracks().map((t) => `${t.kind}:${t.enabled ? 'on' : 'off'}`).join(',')}`)
+      } catch (e) {
+        dbg(`media: cam+mic BLOCKED (${e.name}) → retry audio-only`)
         try {
           localStream.current = await navigator.mediaDevices.getUserMedia({ audio: true })
           setCamOn(false)
-        } catch {
+          dbg('media: audio-only OK')
+        } catch (e2) {
+          dbg(`media: FATAL — mic also blocked (${e2.name})`)
           if (!dead) setStreamErr('camera & mic blocked 😅 check browser permissions')
           return
         }
@@ -135,6 +162,11 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     pcs.current.delete(id)
     streams.current.delete(id)
     retries.current.delete(id)
+    setDiag((d) => {
+      const n = { ...d }
+      delete n[id]
+      return n
+    })
     setParts((p) => {
       const n = { ...p }
       delete n[id]
@@ -162,13 +194,30 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     })
   }
 
+  const noteDiag = (peerId, patch) =>
+    setDiag((d) => ({ ...d, [peerId]: { ...d[peerId], ...patch } }))
+
   // ── negotiation ──────────────────────────────────────────────────────────
   function ensurePc(peerId) {
     let pc = pcs.current.get(peerId)
     if (pc) return pc
+    dbg(`pc: creating for peer=${peerId}`)
     pc = new RTCPeerConnection(RTC_CONFIG)
     pcs.current.set(peerId, pc)
+    noteDiag(peerId, { conn: 'connecting' })
+    const seenCand = []
+    const ctype = (c) => c?.candidateType || /typ (\w+)/.exec(c?.candidate || '')?.[1] || '?'
+    pc.onicecandidate = (e) => {
+      if (!e.candidate) dbg(`pc=${peerId}: gathering complete — candidates=[${seenCand.join(',') || 'NONE ⚠️'}]`)
+      else {
+        seenCand.push(ctype(e.candidate))
+        dbg(`pc=${peerId}: gathered ${ctype(e.candidate)} cand (total ${seenCand.length})`)
+      }
+    }
+    pc.onicegatheringstatechange = () => dbg(`pc=${peerId}: gathering=${pc.iceGatheringState}`)
+    pc.oniceconnectionstatechange = () => dbg(`pc=${peerId}: iceState=${pc.iceConnectionState}`)
     pc.ontrack = (e) => {
+      dbg(`pc=${peerId}: 📥 ontrack kind=${e.track.kind} (streams=${e.streams.length})`)
       // ALWAYS store first, attach if lucky: the remote tile's <video> may not
       // be mounted yet (peer joined a beat before React rendered it) — the
       // videoRef callback below replays the stream the moment it appears.
@@ -177,6 +226,8 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
       attachVideo(peerId)
     }
     pc.onconnectionstatechange = () => {
+      dbg(`pc=${peerId}: conn=${pc.connectionState}`)
+      noteDiag(peerId, { conn: pc.connectionState })
       if (['failed', 'disconnected'].includes(pc.connectionState)) {
         // Drop the dead pc; if the peer is still in the call, the smaller-id
         // side re-offers once (TURN already had its chance by "failed").
@@ -206,14 +257,20 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     return pc
   }
 
+  // how many a=candidate lines actually made it into a shipped SDP
+  const candCount = (sdp) => ((sdp?.sdp || '').match(/^a=candidate:/gm) || []).length
+
   async function sendOffer(peerId) {
     try {
+      dbg(`signal: → offer peer=${peerId}`)
       const pc = ensurePc(peerId)
       const offer = await pc.createOffer()
       await pc.setLocalDescription(offer)
       await gatheringDone(pc)
+      dbg(`signal: offer written cands=${candCount(pc.localDescription)}`)
       call.set(`m:${myClientId}>${peerId}`, JSON.stringify({ type: 'offer', sdp: pc.localDescription }))
     } catch (err) {
+      dbg(`signal: ❌ offer failed peer=${peerId}: ${err?.message}`)
       console.error('call offer failed:', err)
     }
   }
@@ -227,15 +284,19 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     }
     const { type, sdp } = msg
     if (type === 'offer') {
+      dbg(`signal: ← offer from=${msg._from} cands=${candCount(sdp)}`)
       const pc = ensurePc(msg._from)
       await pc.setRemoteDescription(sdp)
       const ans = await pc.createAnswer()
       await pc.setLocalDescription(ans)
       await gatheringDone(pc)
+      dbg(`signal: answer written to=${msg._from} cands=${candCount(pc.localDescription)}`)
       call.set(`m:${myClientId}>${msg._from}`, JSON.stringify({ type: 'answer', sdp: pc.localDescription }))
     } else if (type === 'answer') {
+      dbg(`signal: ← answer from=${msg._from} cands=${candCount(sdp)}`)
       const pc = pcs.current.get(msg._from)
       if (pc && pc.signalingState !== 'stable') await pc.setRemoteDescription(sdp).catch(() => {})
+      else dbg(`signal: ⚠ answer dropped (no pc or already stable) from=${msg._from}`)
     }
   }
 
@@ -302,6 +363,57 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onlineIds])
+
+  // ── 🔬 diagnostics: which ICE path actually won? host=LAN, srflx=direct
+  // across NAT, relay=through TURN (works everywhere, costs bandwidth).
+  // Without this a dark tile tells you nothing about WHERE the call died.
+  useEffect(() => {
+    if (!Object.keys(parts).length) return
+    const id = setInterval(async () => {
+      for (const [peerId, pc] of pcs.current) {
+        try {
+          const st = await pc.getStats()
+          let sel = null
+          let vIn = 0
+          let aIn = 0
+          st.forEach((r) => {
+            if (r.type === 'candidate-pair' && (r.selected || (r.nominated && r.state === 'succeeded'))) sel = r
+            if (r.type === 'inbound-rtp' && !r.isRemote) {
+              if (r.kind === 'video') vIn = r.bytesReceived || 0
+              if (r.kind === 'audio') aIn = r.bytesReceived || 0
+            }
+          })
+          if (sel) {
+            const lc = st.get(sel.localCandidateId)
+            const rc = st.get(sel.remoteCandidateId)
+            const path = `${lc?.candidateType ?? '?'}→${rc?.candidateType ?? '?'}`
+            if (path !== (diag[peerId]?.path)) dbg(`pc=${peerId}: ✅ selected path=${path}`)
+            noteDiag(peerId, { path })
+          }
+          dbg(`pc=${peerId}: conn=${pc.connectionState} inbound v=${(vIn / 1024).toFixed(0)}KB a=${(aIn / 1024).toFixed(0)}KB`)
+          noteDiag(peerId, { conn: pc.connectionState })
+        } catch {
+          /* pc closed mid-poll — next tick will sort it */
+        }
+      }
+    }, 2000)
+    return () => clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parts])
+
+  // manual re-handshake: click a failed tile. Bigger-id side pokes its own
+  // p: entry so the smaller-id side's observe fires and re-offers.
+  function retryCall(peerId) {
+    pcs.current.get(peerId)?.close()
+    pcs.current.delete(peerId)
+    retries.current.delete(peerId)
+    for (const k of [...call.keys()]) {
+      if (k.startsWith(`m:${myClientId}>${peerId}`) || k.startsWith(`m:${peerId}>${myClientId}`)) call.delete(k)
+    }
+    noteDiag(peerId, { conn: 'connecting', path: null })
+    if (myClientId < peerId) sendOffer(peerId)
+    else call.set(`p:${myClientId}`, selfEntry())
+  }
 
   const leave = () => {
     onLeave?.()
@@ -372,20 +484,35 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
         </div>
         {tileIds.map((id) => {
           const p = parts[id]
+          const d = diag[id] || {}
+          const conn = d.conn || 'connecting'
+          const badge =
+            conn === 'connected'
+              ? `📶 ${d.path || 'p2p'}`
+              : conn === 'failed'
+                ? '💥 failed · tap to retry'
+                : `⏳ ${conn}`
           return (
-            <div key={id} className={`call-tile${p.cam ? '' : ' is-camoff'}${p.share ? ' is-sharing' : ''}`}>
+            <div
+              key={id}
+              className={`call-tile${p.cam ? '' : ' is-camoff'}${p.share ? ' is-sharing' : ''}${conn === 'failed' ? ' is-retryable' : ''}`}
+              onClick={() => {
+                if (conn === 'failed') return retryCall(Number(id))
+                const v = document.querySelector(`video[data-peer="${id}"]`)
+                if (v) {
+                  // autoplay-with-audio may have muted us — tap gives sound back
+                  v.muted = false
+                  v.play().catch(() => {})
+                }
+              }}
+            >
               <video
                 data-peer={id}
                 autoPlay
                 playsInline
                 ref={(el) => el && attachVideo(Number(id))}
-                onClick={(e) => {
-                  // autoplay-with-audio may have muted us — tap gives sound back
-                  const v = e.currentTarget
-                  v.muted = false
-                  v.play().catch(() => {})
-                }}
               />
+              <span className={`call-diag is-${conn}`}>{badge}</span>
               <span className="call-name">
                 {p.emoji} {p.name}
                 {p.share ? ' · 🖥 screen' : ''}

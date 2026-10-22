@@ -451,6 +451,7 @@ body::after {
   vertical-align: 0.18em;
   opacity: 0.38;
   transition: opacity 0.18s ease, border-color 0.18s ease;
+  -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
   white-space: nowrap;
@@ -2371,7 +2372,7 @@ body::after {
   letter-spacing: 0.05em;
   color: var(--accent);
   user-select: all;
-  -webkit-user-select: text; /* Safari has no `all` — plain selection there */
+  -webkit-user-select: all; /* Safari has no `all` — plain selection there */
   cursor: text;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2555,6 +2556,42 @@ body::after {
 }
 .call-tile.is-camoff video {
   opacity: 0.12;
+}
+/* 🔬 per-tile ICE diagnostic badge — tells you WHERE the call stands */
+.call-diag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 0.14rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(6, 8, 20, 0.72);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.call-diag.is-connected {
+  color: #17c06b;
+  border-color: rgba(23, 192, 107, 0.5);
+}
+.call-diag.is-failed {
+  color: #ff6b81;
+  border-color: rgba(255, 107, 129, 0.55);
+}
+.call-tile.is-retryable {
+  cursor: pointer;
+  border-color: rgba(255, 107, 129, 0.6);
+  animation: call-retry-pulse 1.4s ease infinite;
+}
+@keyframes call-retry-pulse {
+  50% {
+    box-shadow: 0 0 0 3px rgba(255, 107, 129, 0.35);
+  }
 }
 /* 🖥 screen share — the tile goes wide and always shows the pixels, even if
    the presenter's camera toggle says "off" (they're sending the screen) */
