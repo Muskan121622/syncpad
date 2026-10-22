@@ -29,6 +29,22 @@ const HISTORY_URL =
 
 const cache = new Map()
 
+// 🔄 Ask OUR server for TURN iceServers (it mints short-lived Xirsys creds
+// server-side, so the secret never ships in this public bundle). Returns [] on
+// any failure → caller falls back to STUN-only. Cached briefly client-side.
+let iceCache = { at: 0, servers: null }
+export async function fetchIceServers() {
+  if (iceCache.servers && Date.now() - iceCache.at < 60_000) return iceCache.servers
+  try {
+    const r = await fetch(`${HISTORY_URL}/turn`)
+    const data = r.ok ? await r.json() : {}
+    iceCache = { at: Date.now(), servers: Array.isArray(data.iceServers) ? data.iceServers : [] }
+    return iceCache.servers
+  } catch {
+    return iceCache.servers || []
+  }
+}
+
 export function fetchStreak(padId) {
   return fetch(`${HISTORY_URL}/streak/${encodeURIComponent(padId)}`)
     .then((r) => (r.ok ? r.json() : { count: 0 }))

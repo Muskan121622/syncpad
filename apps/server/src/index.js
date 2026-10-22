@@ -214,12 +214,76 @@ function bumpStreak(documentName) {
   console.log(`⚡ "${documentName}" streak → ${s.count} day(s)`)
 }
 
+// ── TURN credential minting: GET /turn → { iceServers, ttl } ─────────────
+// Cross-city WebRTC needs a TURN relay, and providers (Xirsys et al.) hand out
+// SHORT-LIVED iceServers from an ident:secret that MUST stay server-side — the
+// frontend is public, so baking the secret there would let anyone burn our
+// quota. Instead the browser asks US for /turn, we POST to the provider with
+// the secret, cache until near expiry, and return only the public iceServers.
+//
+// Env (set on Render): XIRSYS_PATH, XIRSYS_IDENT, XIRSYS_SECRET, XIRSYS_CHANNEL.
+// Unset → /turn returns an empty iceServers list and the app falls back to
+// STUN-only (LAN / direct-P2P still work, hard-NAT peers won't).
+const turnCache = { body: null, expiresAt: 0 }
+
+async function mintTurn() {
+  const { XIRSYS_PATH, XIRSYS_IDENT, XIRSYS_SECRET, XIRSYS_CHANNEL } = process.env
+  if (!XIRSYS_PATH || !XIRSYS_IDENT || !XIRSYS_SECRET) return null
+  const base = XIRSYS_PATH.replace(/\/+$/, '')
+  const path = XIRSYS_CHANNEL ? `/_turn/${encodeURIComponent(XIRSYS_CHANNEL)}` : '/_turn'
+  // Xirsys wants HTTP Basic (base64 ident:secret), a PUT, and ?webrtc=1 so it
+  // returns a standard iceServers array. expire = credential auth lifetime,
+  // capped at 6h; we ask for the max so long calls + re-offers still allocate.
+  const auth = Buffer.from(`${XIRSYS_IDENT}:${XIRSYS_SECRET}`).toString('base64')
+  const res = await fetch(`${base}${path}?webrtc=1&expire=21600`, {
+    method: 'PUT',
+    headers: { authorization: `Basic ${auth}`, 'content-type': 'application/json' },
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok || data.s !== 'ok') throw new Error(`provider responded ${res.status}`)
+  const ttl = 21_600
+  return { body: JSON.stringify({ iceServers: data.v?.iceServers || [], ttl }), ttl }
+}
+
+// Async so it never blocks apiHandler's sync true/false contract. It OWNS the
+// response the moment it's called, so apiHandler returns true immediately.
+async function handleTurn(res) {
+  res.setHeader('access-control-allow-origin', '*')
+  const now = Date.now()
+  // refresh once within an hour of expiry (or on first hit / after a failure)
+  if (!turnCache.body || now > turnCache.expiresAt - 3_600_000) {
+    try {
+      const minted = await mintTurn()
+      if (minted) {
+        turnCache.body = minted.body
+        turnCache.expiresAt = now + minted.ttl * 1000
+        console.log('🔄 minted TURN credentials')
+      }
+    } catch (err) {
+      console.error('⚠️  TURN mint failed:', err.message)
+    }
+  }
+  if (turnCache.body) {
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(turnCache.body)
+  } else {
+    res.writeHead(503, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({ iceServers: [], error: 'turn provider not configured' }))
+  }
+}
+
 // ── History API: GET /history/<pad> → [{ t, who, u(base64) }, …] ──────────
 // Returns true when WE answered the request, false when the path isn't ours —
 // so the same function can run on its own port (dev) or layered onto
 // Hocuspocus' server (single-port deploys).
 function apiHandler(req, res) {
   res.setHeader('access-control-allow-origin', '*')
+
+  // GET /turn → freshly minted iceServers (async, owns its response)
+  if (/^\/turn\b/.test(req.url || '')) {
+    handleTurn(res)
+    return true
+  }
 
   // GET /streak/<pad> → { last, count }
   const streakMatch = /^\/streak\/([A-Za-z0-9_-]{1,64})$/.exec(req.url || '')

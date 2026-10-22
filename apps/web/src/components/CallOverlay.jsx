@@ -15,34 +15,24 @@
 // new tiles. Friends see your screen inside your existing tile.
 
 import { useEffect, useRef, useState } from 'react'
+import { fetchIceServers } from '../lib/pad.js'
 
 // 🌐 ICE servers. STUN only DISCOVERS a direct path; across two different-city
 // NATs (Delhi↔Mumbai) / symmetric NAT / AP-isolating routers there IS no direct
-// path, so a TURN RELAY is mandatory for media to ever flow. The old hardcoded
-// OpenRelay creds are dead (0 relay candidates in the field) — TURN now comes
-// from env so we can point at our own coturn on Oracle Free Tier. Set these in
-// Vercel (VITE_TURN_URLS / VITE_TURN_USER / VITE_TURN_PASS); left blank the app
-// still works on LAN / direct-P2P networks, just not across hard NATs.
-const TURN_URLS = (import.meta.env.VITE_TURN_URLS || '')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean)
+// path, so a TURN RELAY is mandatory for media to ever flow. Relay credentials
+// are minted by OUR backend (GET /turn → short-lived Xirsys iceServers) so the
+// provider secret never ships in this public bundle. We start STUN-only and
+// swap in the relay list once it loads (before we announce into any call).
+const STUN_SERVERS = [
+  { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+]
+let ICE_SERVERS = STUN_SERVERS
+const rtcConfig = () => ({ iceServers: ICE_SERVERS, iceCandidatePoolSize: 4 })
 
-const RTC_CONFIG = {
-  iceServers: [
-    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
-    ...(TURN_URLS.length
-      ? [
-          {
-            urls: TURN_URLS,
-            username: import.meta.env.VITE_TURN_USER,
-            credential: import.meta.env.VITE_TURN_PASS,
-          },
-        ]
-      : []),
-  ],
-  // Gather relay candidates BEFORE the one-shot SDP is written to the CRDT.
-  iceCandidatePoolSize: 4,
+async function loadIce() {
+  const turn = await fetchIceServers()
+  ICE_SERVERS = turn.length ? [...STUN_SERVERS, ...turn] : STUN_SERVERS
+  dbg(`ice: TURN ${turn.length ? `ON → ${turn.length} relay server(s) minted by backend` : 'OFF (STUN only — will fail across hard NAT)'}`)
 }
 
 // 🧭 call-tracer: every step lands in window.__callLog with a +ms stamp, and
@@ -57,12 +47,12 @@ function dbg(...args) {
   console.log(`%c🎥 ${line}`, 'color:#8b7cf6')
 }
 dbg(`boot: room=${(location.href.match(/\/r\/([a-z0-9]+)/i) || [])[1] ?? '?'} ua=${navigator.userAgent.slice(0, 60)}`)
-dbg(`ice: TURN ${TURN_URLS.length ? `ON → ${TURN_URLS.join(' , ')}` : 'OFF (STUN only — will fail across hard NAT)'}`)
 globalThis.copyCallLog = async () => {
   await navigator.clipboard.writeText(LOG.join('\n'))
   console.log('📋 full call trace copied — paste it in chat')
   return LOG.length
 }
+
 
 // resolve once ICE candidates are baked into the SDP (or after a safety wait)
 function gatheringDone(pc) {
@@ -102,6 +92,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   useEffect(() => {
     let dead = false
     async function grab() {
+      const iceReady = loadIce() // fetch relay creds in parallel with the prompt
       dbg(`media: requesting cam+mic (myId=${myClientId})`)
       try {
         localStream.current = await navigator.mediaDevices.getUserMedia({
@@ -122,6 +113,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
         }
       }
       if (dead || !localStream.current) return
+      await iceReady // ensure relay list is loaded before we appear in any call
       if (selfRef.current) selfRef.current.srcObject = localStream.current
       announce(true)
     }
@@ -210,7 +202,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     let pc = pcs.current.get(peerId)
     if (pc) return pc
     dbg(`pc: creating for peer=${peerId}`)
-    pc = new RTCPeerConnection(RTC_CONFIG)
+    pc = new RTCPeerConnection(rtcConfig())
     pcs.current.set(peerId, pc)
     noteDiag(peerId, { conn: 'connecting' })
     const seenCand = []
