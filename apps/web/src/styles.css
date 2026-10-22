@@ -2981,6 +2981,7 @@ body::after {
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 6;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3011,6 +3012,148 @@ body::after {
 .call-spotlight-unpin:hover {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+/* 🖍️ draw-on-their-screen — transparent canvas over the pinned video. Only
+   captures pointer events while drawing is ON, else clicks reach the video. */
+.call-draw-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  pointer-events: none;
+}
+.call-draw-layer.is-on {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+.call-draw-layer.is-erase {
+  cursor: cell;
+}
+.call-draw-bar {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(6, 8, 20, 0.82);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.draw-btn {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.draw-btn:hover {
+  border-color: var(--accent);
+}
+.draw-btn.is-on {
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+/* ✕ collapse the toolbar + 🖍️ floating pill to bring it back */
+.draw-close {
+  padding: 0.3rem 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.draw-reopen {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(6, 8, 20, 0.82);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--ink);
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.draw-reopen:hover {
+  transform: translateX(-50%) scale(1.08);
+  border-color: var(--accent);
+}
+.draw-colors {
+  display: flex;
+  gap: 0.28rem;
+  transition: opacity 0.15s ease;
+}
+.draw-colors.is-dim {
+  opacity: 0.4;
+}
+.draw-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  cursor: pointer;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.draw-swatch:hover {
+  transform: scale(1.18);
+}
+.draw-swatch.is-active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px #fff, 0 0 12px color-mix(in srgb, var(--sw, var(--accent)) 70%, transparent);
+  transform: scale(1.12);
+}
+.draw-sizes {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.draw-size {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+}
+.draw-size i {
+  display: block;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.draw-size.is-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.draw-size.is-active i {
+  background: var(--accent);
 }
 .rail-btn.is-call.is-active {
   box-shadow: 0 0 0 2px #ff6b81, 0 0 18px rgba(255, 107, 129, 0.5);
@@ -4248,5 +4391,14 @@ body::after {
   .call-spotlight-stage {
     width: 100%;
     max-height: 80vh;
+  }
+  .call-draw-bar {
+    gap: 0.3rem;
+    padding: 0.28rem 0.4rem;
+    top: 6px;
+  }
+  .draw-btn {
+    font-size: 0.66rem;
+    padding: 0.24rem 0.45rem;
   }
 }

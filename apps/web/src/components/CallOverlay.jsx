@@ -179,6 +179,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     call.delete(`p:${id}`)
     for (const k of [...call.keys()]) {
       if (k.startsWith(`m:${id}>`) || k.endsWith(`>${id}`)) call.delete(k)
+      else if (k.startsWith(`d:${id}:`)) call.delete(k) // 🖍️ drop their ink too
     }
   }
 
@@ -509,6 +510,195 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   const pinnedPeer = pinned && pinned !== 'self' ? parts[pinned] : null
   const showSpot = pinned === 'self' || !!pinnedPeer
 
+  // ── 🖍️ draw-on-their-screen — annotate the pinned shared screen. Ink is
+  // synced through the SAME 'call' Y.Map under `d:` keys, so everyone looking
+  // at the spotlight sees everyone's strokes. Points are normalized to the
+  // video's *content* rect (the contain-fitted, letterbox-aware box) so the
+  // same stroke lands on the same part of the shared screen for every viewer,
+  // no matter their window size. Strokes commit on pointer-up (CRDT-cheap).
+  const [strokes, setStrokes] = useState([])
+  const [drawOn, setDrawOn] = useState(true)
+  const [eraser, setEraser] = useState(false) // ✂️ cut mode: tap a stroke to remove it
+  const [toolsOpen, setToolsOpen] = useState(true) // 🖍️ show/hide the whole draw toolbar
+  const [penColor, setPenColor] = useState('#ff5d8f')
+  const [penSize, setPenSize] = useState(4)
+  const spotVideoRef = useRef(null)
+  const spotCanvasRef = useRef(null)
+  const tempStroke = useRef(null)
+  const drawingPointer = useRef(false)
+  const erasingPointer = useRef(false)
+  const DRAW_COLORS = ['#ff5d8f', '#ffd166', '#a6e86b', '#22d3ee', '#a78bfa', '#ffffff']
+
+  function readStrokes() {
+    const arr = []
+    call.forEach((v, k) => {
+      if (!k.startsWith('d:')) return
+      try {
+        arr.push({ key: k, ...JSON.parse(v) })
+      } catch {
+        /* ignore junk */
+      }
+    })
+    arr.sort((a, b) => a.seq - b.seq)
+    setStrokes(arr)
+  }
+
+  useEffect(() => {
+    readStrokes()
+    const obs = () => readStrokes()
+    call.observe(obs)
+    return () => call.unobserve(obs)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [call])
+
+  // the contain-fitted rectangle the real screen pixels occupy inside the box
+  function contentRect() {
+    const c = spotCanvasRef.current
+    const v = spotVideoRef.current
+    if (!c) return { x: 0, y: 0, w: 1, h: 1 }
+    const cw = c.clientWidth
+    const ch = c.clientHeight
+    const vw = v?.videoWidth || 16
+    const vh = v?.videoHeight || 9
+    const s = Math.min(cw / vw, ch / vh)
+    const w = vw * s
+    const h = vh * s
+    return { x: (cw - w) / 2, y: (ch - h) / 2, w, h }
+  }
+
+  function redraw() {
+    const c = spotCanvasRef.current
+    if (!c) return
+    const dpr = window.devicePixelRatio || 1
+    const cw = c.clientWidth
+    const ch = c.clientHeight
+    if (!cw || !ch) return
+    if (c.width !== Math.round(cw * dpr) || c.height !== Math.round(ch * dpr)) {
+      c.width = Math.round(cw * dpr)
+      c.height = Math.round(ch * dpr)
+    }
+    const ctx = c.getContext('2d')
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.clearRect(0, 0, cw, ch)
+    const r = contentRect()
+    const all = tempStroke.current
+      ? [...strokes, tempStroke.current]
+      : strokes
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    for (const s of all) {
+      if (!s.pts?.length) continue
+      ctx.strokeStyle = s.color || '#fff'
+      ctx.lineWidth = s.size || 4
+      ctx.beginPath()
+      s.pts.forEach(([nx, ny], i) => {
+        const x = r.x + nx * r.w
+        const y = r.y + ny * r.h
+        if (i) ctx.lineTo(x, y)
+        else ctx.moveTo(x, y)
+      })
+      ctx.stroke()
+    }
+  }
+
+  // repaint on any ink / pen / layout change + whenever the box resizes
+  useEffect(() => {
+    if (!showSpot) return
+    redraw()
+    const c = spotCanvasRef.current
+    if (!c || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => redraw())
+    ro.observe(c)
+    return () => ro.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strokes, drawOn, penColor, penSize, showSpot, pinned])
+
+  function toNorm(e) {
+    const c = spotCanvasRef.current
+    const rect = c.getBoundingClientRect()
+    const r = contentRect()
+    const px = e.clientX - rect.left
+    const py = e.clientY - rect.top
+    return [(px - r.x) / r.w, (py - r.y) / r.h]
+  }
+
+  function onDrawDown(e) {
+    if (eraser) {
+      e.preventDefault()
+      e.currentTarget.setPointerCapture?.(e.pointerId)
+      drawingPointer.current = true
+      erasingPointer.current = true
+      eraseAt(e)
+      return
+    }
+    if (!drawOn) return
+    e.preventDefault()
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    drawingPointer.current = true
+    tempStroke.current = { pts: [toNorm(e)], color: penColor, size: penSize }
+    redraw()
+  }
+  function onDrawMove(e) {
+    if (erasingPointer.current) {
+      eraseAt(e)
+      return
+    }
+    if (!drawingPointer.current || !tempStroke.current) return
+    tempStroke.current.pts.push(toNorm(e))
+    redraw()
+  }
+  function onDrawUp() {
+    if (erasingPointer.current) {
+      erasingPointer.current = false
+      drawingPointer.current = false
+      return
+    }
+    if (!drawingPointer.current) return
+    drawingPointer.current = false
+    const t = tempStroke.current
+    tempStroke.current = null
+    if (t && t.pts.length > 1) {
+      const seq = Date.now()
+      call.set(
+        `d:${myClientId}:${seq}`,
+        JSON.stringify({ pts: t.pts, color: t.color, size: t.size, who: identity.name, seq }),
+      )
+    } else {
+      redraw()
+    }
+  }
+
+  // ✂️ cut: vector hit-test — delete any whole stroke the pointer touches
+  function eraseAt(e) {
+    const c = spotCanvasRef.current
+    if (!c) return
+    const rect = c.getBoundingClientRect()
+    const r = contentRect()
+    const px = e.clientX - rect.left
+    const py = e.clientY - rect.top
+    const RAD = 14
+    for (const s of strokes) {
+      if (!s.pts?.length) continue
+      const hit = s.pts.some(([nx, ny]) => {
+        const x = r.x + nx * r.w
+        const y = r.y + ny * r.h
+        return Math.hypot(x - px, y - py) <= RAD + (s.size || 4) / 2
+      })
+      if (hit) call.delete(s.key)
+    }
+  }
+
+  function undoMine() {
+    let last = null
+    for (const s of strokes) {
+      if (s.key.startsWith(`d:${myClientId}:`) && (!last || s.seq > last.seq)) last = s
+    }
+    if (last) call.delete(last.key)
+  }
+  function clearAll() {
+    for (const k of [...call.keys()]) if (k.startsWith('d:')) call.delete(k)
+  }
+
   return (
     <>
       {/* 📌 big-picture spotlight — click backdrop or ✕ to drop back to tiles */}
@@ -521,7 +711,9 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
                 autoPlay
                 playsInline
                 muted
+                onLoadedMetadata={redraw}
                 ref={(el) => {
+                  spotVideoRef.current = el
                   if (el) el.srcObject = sharing ? screenStream.current : localStream.current
                 }}
               />
@@ -530,8 +722,105 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
                 data-peer={pinned}
                 autoPlay
                 playsInline
-                ref={(el) => el && attachVideo(Number(pinned))}
+                onLoadedMetadata={redraw}
+                ref={(el) => {
+                  spotVideoRef.current = el
+                  if (el) attachVideo(Number(pinned))
+                }}
               />
+            )}
+            {/* 🖍️ shared annotation surface over the pinned screen */}
+            <canvas
+              className={`call-draw-layer${drawOn || eraser ? ' is-on' : ''}${eraser ? ' is-erase' : ''}`}
+              ref={(el) => {
+                spotCanvasRef.current = el
+              }}
+              onPointerDown={onDrawDown}
+              onPointerMove={onDrawMove}
+              onPointerUp={onDrawUp}
+              onPointerCancel={onDrawUp}
+            />
+            {toolsOpen ? (
+              <div className="call-draw-bar">
+                <button
+                  type="button"
+                  className={`draw-btn${drawOn && !eraser ? ' is-on' : ''}`}
+                  onClick={() => {
+                    setEraser(false)
+                    setDrawOn((v) => !v)
+                  }}
+                  title={drawOn && !eraser ? 'drawing ON — click to draw, toggle off to interact with the video' : 'drawing OFF'}
+                >
+                  ✏️ draw
+                </button>
+                <button
+                  type="button"
+                  className={`draw-btn${eraser ? ' is-on' : ''}`}
+                  onClick={() => {
+                    setDrawOn(false)
+                    setEraser((v) => !v)
+                  }}
+                  title={eraser ? 'cut ON — tap or drag over a stroke to remove it' : '✂️ cut — erase a stroke you tap'}
+                >
+                  ✂️ cut
+                </button>
+                <span className={`draw-colors${drawOn ? '' : ' is-dim'}`}>
+                  {DRAW_COLORS.map((cc) => (
+                    <button
+                      key={cc}
+                      type="button"
+                      className={`draw-swatch${penColor === cc ? ' is-active' : ''}`}
+                      style={{ background: cc, ['--sw']: cc }}
+                      title={cc}
+                      onClick={() => {
+                        setPenColor(cc)
+                        setEraser(false)
+                        setDrawOn(true)
+                      }}
+                    />
+                  ))}
+                </span>
+                <span className="draw-sizes">
+                  {[3, 5, 9].map((sz) => (
+                    <button
+                      key={sz}
+                      type="button"
+                      className={`draw-size${penSize === sz ? ' is-active' : ''}`}
+                      title={`${sz}px brush`}
+                      onClick={() => {
+                        setPenSize(sz)
+                        setEraser(false)
+                        setDrawOn(true)
+                      }}
+                    >
+                      <i style={{ width: sz + 3, height: sz + 3 }} />
+                    </button>
+                  ))}
+                </span>
+                <button type="button" className="draw-btn" onClick={undoMine} title="undo my last stroke">
+                  ↩︎ undo
+                </button>
+                <button type="button" className="draw-btn" onClick={clearAll} title="clear everyone's ink">
+                  🧽 clear
+                </button>
+                <button
+                  type="button"
+                  className="draw-btn draw-close"
+                  onClick={() => setToolsOpen(false)}
+                  title="hide this toolbar"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="draw-reopen"
+                onClick={() => setToolsOpen(true)}
+                title="show drawing tools"
+              >
+                🖍️
+              </button>
             )}
             <div className="call-spotlight-bar">
               <span className="call-spotlight-name">
