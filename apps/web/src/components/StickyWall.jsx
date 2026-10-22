@@ -10,7 +10,7 @@ import * as Y from 'yjs'
 import SaveButton from './SaveButton.jsx'
 import { stickiesText } from '../lib/export.js'
 
-const PAPER = ['#ffe66d', '#ff6ad5', '#4dff9e', '#8b7cff', '#ffb26b', '#33e0ff']
+const PAPER = ['#ffd9ea', '#fff0a6', '#c9f5d8', '#dcc9ff', '#ffd9bd', '#c9e9ff']
 const INK = '#1a1530'
 
 // deterministic tilt per note — same wobble on every screen
@@ -109,7 +109,7 @@ export default function StickyWall({ stickies, identity }) {
                 key={p}
                 type="button"
                 className={`swatch${nextColor === p ? ' is-active' : ''}`}
-                style={{ background: p }}
+                style={{ background: p, ['--sw']: p }}
                 onClick={() => setNextColor(p)}
                 aria-label={`paper ${p}`}
               />

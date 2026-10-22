@@ -11,8 +11,8 @@ const NOUNS = [
 ]
 
 export const COLORS = [
-  '#8b7cff', '#33e0ff', '#ff6ad5', '#b6ff3d',
-  '#ffb26b', '#ff5d7a', '#4dff9e', '#ffe14d',
+  '#a78bfa', '#22d3ee', '#f472b6', '#a6e86b',
+  '#ff9e6d', '#ff5d8f', '#3ddc97', '#ffd166',
 ]
 
 export const REACTION_EMOJIS = ['✨', '🔥', '💀', '😭', '🫶', '👀', '🧠', '⚡']

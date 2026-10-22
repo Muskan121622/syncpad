@@ -12,7 +12,7 @@ import * as Y from 'yjs'
 import SaveButton from './SaveButton.jsx'
 
 const BG = '#12162c'
-const PALETTE = ['#ff6b81', '#ffb26b', '#ffe66d', '#4dff9e', '#33e0ff', '#8b7cff', '#ff6ad5', '#ffffff']
+const PALETTE = ['#ff5d8f', '#ff9e6d', '#ffd166', '#a6e86b', '#3ddc97', '#22d3ee', '#6ea8fe', '#a78bfa', '#f472b6', '#ffffff']
 const SIZES = [3, 7, 14]
 
 export default function DoodlePanel({ doodles, identity }) {
@@ -153,7 +153,7 @@ export default function DoodlePanel({ doodles, identity }) {
                 key={p}
                 type="button"
                 className={`swatch${color === p && !eraser ? ' is-active' : ''}`}
-                style={{ background: p }}
+                style={{ background: p, ['--sw']: p }}
                 onClick={() => {
                   setColor(p)
                   setEraser(false)

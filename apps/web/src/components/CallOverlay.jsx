@@ -79,6 +79,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   const [micOn, setMicOn] = useState(true)
   const [camOn, setCamOn] = useState(true)
   const [sharing, setSharing] = useState(false)
+  const [pinned, setPinned] = useState(null) // 'self' | peerId — big-picture spotlight
   const localStream = useRef(null)
   const screenStream = useRef(null)
   const pcs = useRef(new Map()) // peerId -> RTCPeerConnection
@@ -186,14 +187,18 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   // its <video> element no matter which one finished mounting first.
   function attachVideo(peerId) {
     const stream = streams.current.get(peerId)
-    const el = document.querySelector(`video[data-peer="${peerId}"]`)
-    if (!stream || !el) return
-    if (el.srcObject !== stream) el.srcObject = stream
-    // Autoplay with audio can still be rejected until a real user gesture —
-    // muted fallback keeps the PICTURE alive; the tile tap unmutes below.
-    el.play().catch(() => {
-      el.muted = true
-      el.play().catch(() => {})
+    if (!stream) return
+    // A pinned peer has TWO <video>s (mini tile + spotlight) sharing data-peer;
+    // attach to every match so the big picture is never a black box.
+    const els = document.querySelectorAll(`video[data-peer="${peerId}"]`)
+    els.forEach((el) => {
+      if (el.srcObject !== stream) el.srcObject = stream
+      // Autoplay with audio can still be rejected until a real user gesture —
+      // muted fallback keeps the PICTURE alive; the tile tap unmutes below.
+      el.play().catch(() => {
+        el.muted = true
+        el.play().catch(() => {})
+      })
     })
   }
 
@@ -501,9 +506,47 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   }
 
   const tileIds = Object.keys(parts).sort((a, b) => a - b)
+  const pinnedPeer = pinned && pinned !== 'self' ? parts[pinned] : null
+  const showSpot = pinned === 'self' || !!pinnedPeer
 
   return (
-    <div className="call-strip">
+    <>
+      {/* 📌 big-picture spotlight — click backdrop or ✕ to drop back to tiles */}
+      {showSpot && (
+        <div className="call-spotlight" onClick={() => setPinned(null)}>
+          <div className="call-spotlight-stage" onClick={(e) => e.stopPropagation()}>
+            {pinned === 'self' ? (
+              <video
+                key={sharing ? 'spot-screen' : 'spot-cam'}
+                autoPlay
+                playsInline
+                muted
+                ref={(el) => {
+                  if (el) el.srcObject = sharing ? screenStream.current : localStream.current
+                }}
+              />
+            ) : (
+              <video
+                data-peer={pinned}
+                autoPlay
+                playsInline
+                ref={(el) => el && attachVideo(Number(pinned))}
+              />
+            )}
+            <div className="call-spotlight-bar">
+              <span className="call-spotlight-name">
+                {pinned === 'self'
+                  ? `${identity.emoji || '🧑‍🎓'} ${identity.name}${sharing ? ' · 🖥 your screen' : ' (you)'}`
+                  : `${pinnedPeer.emoji} ${pinnedPeer.name}${pinnedPeer.share ? ' · 🖥 screen' : ''}`}
+              </span>
+              <button type="button" className="call-spotlight-unpin" onClick={() => setPinned(null)}>
+                ✕ unpin
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="call-strip">
       {streamErr && <div className="call-err">{streamErr}</div>}
       <div className="call-tiles">
         {/* self tile — always muted (echo police 🚨) */}
@@ -514,6 +557,17 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
           </span>
           {!micOn && <span className="call-mute">🔇</span>}
           {!camOn && !sharing && <span className="call-camoff">📷 off</span>}
+          <button
+            type="button"
+            className={`call-pin${pinned === 'self' ? ' is-on' : ''}`}
+            title={pinned === 'self' ? 'unpin — back to tiles' : 'pin — big picture'}
+            onClick={(e) => {
+              e.stopPropagation()
+              setPinned((p) => (p === 'self' ? null : 'self'))
+            }}
+          >
+            📌
+          </button>
         </div>
         {tileIds.map((id) => {
           const p = parts[id]
@@ -552,6 +606,17 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
               </span>
               {!p.mic && <span className="call-mute">🔇</span>}
               {!p.cam && !p.share && <span className="call-camoff">📷 off</span>}
+              <button
+                type="button"
+                className={`call-pin${p.share ? ' is-hint' : ''}${pinned === id ? ' is-on' : ''}`}
+                title={pinned === id ? 'unpin — back to tiles' : 'pin — big picture'}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setPinned((cur) => (cur === id ? null : id))
+                }}
+              >
+                📌
+              </button>
             </div>
           )
         })}
@@ -578,6 +643,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
           📞 leave
         </button>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

@@ -70,7 +70,7 @@ export default function ClaimOverlay({ suggestion, onClaim }) {
               key={c}
               type="button"
               className={`claim-swatch${color === c ? ' is-active' : ''}`}
-              style={{ background: c }}
+              style={{ background: c, ['--sw']: c }}
               onClick={() => setColor(c)}
               aria-label={`cursor color ${c}`}
             />

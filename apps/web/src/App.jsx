@@ -391,6 +391,18 @@ export default function App() {
   const rewinding = rewindIdx >= 0
   const step = rewinding ? timeline[Math.min(rewindIdx, timeline.length - 1)] ?? null : null
 
+  // While rewinding, every tool reads from the frozen snapshot doc instead of
+  // the live one. The recorder encodes the WHOLE ydoc, so scrubbing the
+  // timeline rewinds the viewer / code / doodle / sheet / sticky / task content
+  // too — not just the pad ghost. Live edits keep flowing behind it.
+  const rewindDoc = rewinding && previewDoc ? previewDoc : null
+  const tasksView = rewindDoc ? rewindDoc.getArray('tasks') : tasksArray
+  const doodlesView = rewindDoc ? rewindDoc.getArray('doodles') : doodlesArray
+  const stickiesView = rewindDoc ? rewindDoc.getMap('stickies') : stickiesMap
+  const sheetView = rewindDoc ? rewindDoc.getMap('sheet') : sheetMap
+  const codeView = rewindDoc ? rewindDoc.getMap('code') : codeMap
+  const viewerView = rewindDoc ? rewindDoc.getMap('viewer') : viewerMap
+
   // Frozen Y.Doc rebuilt from the snapshot's encoded CRDT state.
   useEffect(() => {
     if (!step) {
@@ -462,18 +474,20 @@ export default function App() {
         onNewPad={newPad}
       />
 
-      <FocusBar focusMap={focusMap} identity={identity} peers={peers} onPhase={handleFocusPhase} />
-
-      <StreakChip count={streak} />
-
-      <div className="room-extras">
-        <GoalBar
-          goalMap={goalMap}
-          identity={identity}
-          onCelebrate={() => celebrate(['🎯', '🎉', '✅', '🔥'])}
-        />
-        <LofiToggle meta={meta} />
-        <CheckinBar checkinsMap={checkinsMap} identity={identity} />
+      {/* one compact status strip instead of three stacked rows — gives
+          every tool back its vertical space */}
+      <div className="status-row">
+        <FocusBar focusMap={focusMap} identity={identity} peers={peers} onPhase={handleFocusPhase} />
+        <StreakChip count={streak} />
+        <div className="room-extras">
+          <GoalBar
+            goalMap={goalMap}
+            identity={identity}
+            onCelebrate={() => celebrate(['🎯', '🎉', '✅', '🔥'])}
+          />
+          <LofiToggle meta={meta} />
+          <CheckinBar checkinsMap={checkinsMap} identity={identity} />
+        </div>
       </div>
 
 
@@ -486,10 +500,18 @@ export default function App() {
       />
 
       {tool !== 'pad' && (
-        <section className={`tool-view tool-${tool}`}>
+        <section className={`tool-view tool-${tool}${rewinding ? ' is-rewinding' : ''}`}>
+          {rewinding && (
+            <div className="tool-rewind-tag">
+              👻 previewing an earlier moment — this tool is frozen
+              <button type="button" className="rw-btn back" onClick={goLive}>
+                ⦿ back to live
+              </button>
+            </div>
+          )}
           {tool === 'tasks' && (
             <TasksPanel
-              tasksArray={tasksArray}
+              tasksArray={tasksView}
               identity={identity}
               onCelebrate={() => celebrate(['✅', '🎉', '💪', '🔥'])}
             />
@@ -504,7 +526,7 @@ export default function App() {
                 { id: 'L', w: 1180 },
               ]}
             >
-              <DoodlePanel doodles={doodlesArray} identity={identity} />
+              <DoodlePanel doodles={doodlesView} identity={identity} />
             </PadFrame>
           )}
           {tool === 'sticky' && (
@@ -517,7 +539,7 @@ export default function App() {
                 { id: 'L', w: 1200 },
               ]}
             >
-              <StickyWall stickies={stickiesMap} identity={identity} />
+              <StickyWall stickies={stickiesView} identity={identity} />
             </PadFrame>
           )}
           {tool === 'sheet' && (
@@ -530,25 +552,25 @@ export default function App() {
                 { id: 'L', w: 1080 },
               ]}
             >
-              <SheetPanel sheet={sheetMap} />
+              <SheetPanel sheet={sheetView} />
             </PadFrame>
           )}
           {tool === 'code' && (
             <PadFrame
-              storeKey="syncpad-code-size"
-              defaultSize={{ w: 900, h: 0 }}
+              storeKey="syncpad-code-size-v4"
+              defaultSize={{ w: 1280, h: 0 }}
               presets={[
-                { id: 'S', w: 620 },
-                { id: 'M', w: 900 },
-                { id: 'L', w: 1180 },
+                { id: 'S', w: 980 },
+                { id: 'M', w: 1280 },
+                { id: 'L', w: 1560 },
               ]}
             >
-              <CodePanel code={codeMap} identity={identity} myClientId={myClientId} />
+              <CodePanel code={codeView} identity={identity} myClientId={myClientId} />
             </PadFrame>
           )}
           {tool === 'viewer' && (
             <PadFrame
-              storeKey="syncpad-viewer-size"
+              storeKey="syncpad-viewer-size-v2"
               defaultSize={{ w: 980, h: 0 }}
               presets={[
                 { id: 'S', w: 700 },
@@ -556,7 +578,7 @@ export default function App() {
                 { id: 'L', w: 1260 },
               ]}
             >
-              <ViewerPanel viewer={viewerMap} identity={identity} />
+              <ViewerPanel viewer={viewerView} identity={identity} />
             </PadFrame>
           )}
         </section>

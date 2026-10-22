@@ -99,7 +99,7 @@ export default function PadFrame({
 
   const style = zen
     ? { '--pad-w': 'min(1200px, 100%)', '--pad-h': 'calc(100vh - 140px)' }
-    : { '--pad-w': `${size.w}px`, '--pad-h': size.h ? `${size.h}px` : 'auto' }
+    : { '--pad-w': `${size.w}px`, ...(size.h ? { '--pad-h': `${size.h}px` } : {}) }
 
   const activePreset = presets.find((p) => Math.abs(size.w - p.w) < 14)
 

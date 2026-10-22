@@ -21,7 +21,7 @@ const FONTS = [
   { id: 'mono', label: 'Courier', css: "'Courier New', monospace" },
 ]
 const SIZES = [10, 12, 14, 16, 18, 22, 28]
-const SWATCHES = [null, '#ff6b81', '#ffb26b', '#ffe66d', '#7de8a8', '#33e0ff', '#8b7cff', '#ff6ad5', '#ffffff', '#0d1023']
+const SWATCHES = [null, '#ff5d8f', '#ff9e6d', '#ffd166', '#a6e86b', '#3ddc97', '#22d3ee', '#6ea8fe', '#a78bfa', '#f472b6', '#ffffff', '#0d1023']
 const NFORMATS = [
   { id: 'gen', label: 'General' },
   { id: 'cur', label: '₹ Currency' },
@@ -377,7 +377,7 @@ export default function SheetPanel({ sheet }) {
               {picker === 'fc' && (
                 <div className="rb-pop">
                   {SWATCHES.map((p, i) => (
-                    <button key={i} type="button" className="rb-swatch" style={{ background: p || 'transparent' }} title={p || 'reset'}
+                    <button key={i} type="button" className="rb-swatch" style={{ background: p || 'transparent', ['--sw']: p || 'transparent' }} title={p || 'reset'}
                       onClick={() => { patchStyle({ fc: p }); setPicker(null) }} />
                   ))}
                 </div>
@@ -390,7 +390,7 @@ export default function SheetPanel({ sheet }) {
               {picker === 'bg' && (
                 <div className="rb-pop">
                   {SWATCHES.map((p, i) => (
-                    <button key={i} type="button" className="rb-swatch" style={{ background: p || 'transparent' }} title={p || 'reset'}
+                    <button key={i} type="button" className="rb-swatch" style={{ background: p || 'transparent', ['--sw']: p || 'transparent' }} title={p || 'reset'}
                       onClick={() => { patchStyle({ bg: p }); setPicker(null) }} />
                   ))}
                 </div>

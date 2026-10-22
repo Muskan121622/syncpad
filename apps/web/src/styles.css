@@ -61,6 +61,146 @@
   --glow: rgba(255, 178, 107, 0.35);
 }
 
+/* 🎀 coquette — soft blush girlie */
+:root[data-vibe='coquette'] {
+  --bg: #1b0f18;
+  --bg2: #2b1626;
+  --surface: rgba(255, 143, 171, 0.06);
+  --surface-strong: rgba(43, 22, 38, 0.88);
+  --line: rgba(255, 143, 171, 0.2);
+  --ink: #ffe9f2;
+  --muted: #cf9db4;
+  --accent: #ff8fab;
+  --accent2: #ffc2d1;
+  --glow: rgba(255, 143, 171, 0.4);
+}
+
+/* 💜 lavender — dreamy lilac */
+:root[data-vibe='lavender'] {
+  --bg: #14112a;
+  --bg2: #211a3d;
+  --surface: rgba(196, 181, 253, 0.06);
+  --surface-strong: rgba(33, 26, 61, 0.88);
+  --line: rgba(196, 181, 253, 0.18);
+  --ink: #efeaff;
+  --muted: #a89ede;
+  --accent: #c4b5fd;
+  --accent2: #a5b4fc;
+  --glow: rgba(196, 181, 253, 0.4);
+}
+
+/* 🌿 sage — calm muted green */
+:root[data-vibe='sage'] {
+  --bg: #0f1712;
+  --bg2: #18251d;
+  --surface: rgba(157, 207, 166, 0.06);
+  --surface-strong: rgba(24, 37, 29, 0.9);
+  --line: rgba(157, 207, 166, 0.18);
+  --ink: #e6f3e8;
+  --muted: #86a58d;
+  --accent: #9dc88d;
+  --accent2: #cfe8c4;
+  --glow: rgba(157, 200, 141, 0.35);
+}
+
+/* 🧈 butter — warm cozy cream */
+:root[data-vibe='butter'] {
+  --bg: #1a1508;
+  --bg2: #2a2210;
+  --surface: rgba(255, 209, 102, 0.06);
+  --surface-strong: rgba(42, 34, 16, 0.9);
+  --line: rgba(255, 209, 102, 0.18);
+  --ink: #fff4d6;
+  --muted: #c7b477;
+  --accent: #ffd166;
+  --accent2: #ffe9a8;
+  --glow: rgba(255, 209, 102, 0.35);
+}
+
+/* 🍒 cherry — moody 'villain era' red */
+:root[data-vibe='cherry'] {
+  --bg: #1a0509;
+  --bg2: #2c0a12;
+  --surface: rgba(255, 77, 94, 0.06);
+  --surface-strong: rgba(44, 10, 18, 0.9);
+  --line: rgba(255, 77, 94, 0.2);
+  --ink: #ffe4e8;
+  --muted: #c98a94;
+  --accent: #ff4d5e;
+  --accent2: #ff8fa3;
+  --glow: rgba(255, 77, 94, 0.4);
+}
+
+/* 🩵 teal — transformative teal */
+:root[data-vibe='teal'] {
+  --bg: #04141a;
+  --bg2: #0a2430;
+  --surface: rgba(45, 212, 191, 0.06);
+  --surface-strong: rgba(10, 36, 48, 0.9);
+  --line: rgba(45, 212, 191, 0.2);
+  --ink: #d8fbf5;
+  --muted: #6fa8a0;
+  --accent: #2dd4bf;
+  --accent2: #22d3ee;
+  --glow: rgba(45, 212, 191, 0.38);
+}
+
+/* 🍑 peach — soft peach floss, warm & dreamy */
+:root[data-vibe='peach'] {
+  --bg: #1c110d;
+  --bg2: #2c1a13;
+  --surface: rgba(255, 176, 143, 0.06);
+  --surface-strong: rgba(44, 26, 19, 0.9);
+  --line: rgba(255, 176, 143, 0.2);
+  --ink: #ffece1;
+  --muted: #cf9d86;
+  --accent: #ffb08f;
+  --accent2: #ffd9c2;
+  --glow: rgba(255, 176, 143, 0.4);
+}
+
+/* 🍵 matcha — milky pistachio, calm & fresh */
+:root[data-vibe='matcha'] {
+  --bg: #12160c;
+  --bg2: #1d2414;
+  --surface: rgba(180, 211, 143, 0.06);
+  --surface-strong: rgba(29, 36, 20, 0.9);
+  --line: rgba(180, 211, 143, 0.18);
+  --ink: #eef5df;
+  --muted: #9bb377;
+  --accent: #b4d38f;
+  --accent2: #e7f0c8;
+  --glow: rgba(180, 211, 143, 0.35);
+}
+
+/* 🫐 berry — deep plum, moody girly */
+:root[data-vibe='berry'] {
+  --bg: #150a1c;
+  --bg2: #241030;
+  --surface: rgba(200, 107, 214, 0.07);
+  --surface-strong: rgba(36, 16, 48, 0.9);
+  --line: rgba(200, 107, 214, 0.2);
+  --ink: #f7e6ff;
+  --muted: #b98cc9;
+  --accent: #c86bd6;
+  --accent2: #e79bea;
+  --glow: rgba(200, 107, 214, 0.42);
+}
+
+/* ☕ mocha — espresso brown, cozy '90s */
+:root[data-vibe='mocha'] {
+  --bg: #171009;
+  --bg2: #241a10;
+  --surface: rgba(199, 155, 109, 0.06);
+  --surface-strong: rgba(36, 26, 16, 0.9);
+  --line: rgba(199, 155, 109, 0.2);
+  --ink: #f5e9db;
+  --muted: #b09273;
+  --accent: #c79b6d;
+  --accent2: #e0c3a0;
+  --glow: rgba(199, 155, 109, 0.38);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -129,6 +269,7 @@ body::after {
 .stage {
   position: relative;
   overflow-y: auto;
+  overflow-x: hidden; /* the vertical bar's width used to trigger a phantom horizontal bar */
   padding: 1.4rem clamp(0.8rem, 4vw, 3rem) 2rem;
 }
 
@@ -242,23 +383,28 @@ body::after {
 
 .vibes {
   display: flex;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  max-width: 15rem;
+  justify-content: flex-end;
 }
 .vibe-dot {
   width: 1.05rem;
   height: 1.05rem;
   border-radius: 50%;
-  border: 2px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
   cursor: pointer;
-  transition: transform 0.15s, border-color 0.2s;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.45), inset 0 -2px 3px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .vibe-dot:hover {
-  transform: scale(1.25);
+  transform: scale(1.28) translateY(-1px);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5), 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 .vibe-dot.is-active {
-  border-color: var(--ink);
-  transform: scale(1.2);
-  box-shadow: 0 0 10px var(--glow);
+  border-color: #fff;
+  transform: scale(1.22);
+  box-shadow: 0 0 0 2px #fff, 0 0 14px var(--glow), inset 0 1px 2px rgba(255, 255, 255, 0.45);
 }
 
 /* ── presence ─────────────────────────────────────────────────────────── */
@@ -1080,19 +1226,20 @@ body::after {
   transform: scale(1.12);
 }
 .claim-swatch {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  border: 2px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   transition: all 0.15s ease;
-  opacity: 0.75;
+  opacity: 0.85;
 }
 .claim-swatch:hover { opacity: 1; transform: scale(1.15); }
 .claim-swatch.is-active {
   opacity: 1;
-  border-color: var(--text);
-  box-shadow: 0 0 12px currentColor;
+  border-color: #fff;
+  box-shadow: 0 0 0 2px #fff, 0 0 16px color-mix(in srgb, var(--sw, var(--accent)) 80%, transparent);
   transform: scale(1.2);
 }
 .claim-btn {
@@ -1120,7 +1267,7 @@ body::after {
   gap: 0.7rem;
   width: fit-content;
   max-width: min(720px, 94vw);
-  margin: 0.7rem auto 0;
+  margin: 0 auto 0;
   padding: 0.42rem 1rem;
   border-radius: 999px;
   border: 1px solid var(--line);
@@ -1312,7 +1459,7 @@ body::after {
 /* ══  pad streak chip ═════════════════════════════════════════════ */
 .streak-chip {
   width: fit-content;
-  margin: 0.45rem auto 0;
+  margin: 0 auto 0;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -1352,14 +1499,39 @@ body::after {
 }
 
 /* ══  room extras — goal / lo-fi / check-ins ══════════════════════ */
+/* ══  room status strip — focus + streak + goal/lo-fi/check-in share ONE
+      centered row instead of three stacked fat rows, so every tool gets
+      its vertical space back. Wraps gracefully on narrow screens. ═════ */
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  column-gap: 0.6rem;
+  row-gap: 0.4rem;
+  margin: 0.7rem auto 0;
+  padding: 0 1rem;
+}
+.status-row .focus-bar,
+.status-row .streak-chip,
+.status-row .room-extras {
+  margin-top: 0;
+}
+.focus-bar {
+  padding: 0.32rem 0.9rem;
+}
+.focus-hint {
+  /* the long "start it once…" copy ate a whole row's width — show it on hover */
+  display: none;
+}
 .room-extras {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: 0.45rem;
-  margin: 0.5rem auto 0;
-  padding: 0 1rem;
+  margin: 0;
+  padding: 0;
 }
 .room-extras > * {
   font-size: 0.76rem;
@@ -1640,6 +1812,32 @@ body::after {
   width: min(720px, calc(100% - 7rem));
   margin: 1.4rem auto 2rem;
   animation: claim-in 0.25s ease;
+  position: relative;
+}
+/* while rewinding the tool shows a frozen snapshot — block edits so nobody
+   scribbles on the ghost, but keep the timeline scrubber (outside) usable */
+.tool-view.is-rewinding > *:not(.tool-rewind-tag) {
+  pointer-events: none;
+  filter: saturate(0.7) brightness(0.92);
+}
+.tool-rewind-tag {
+  pointer-events: auto;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: fit-content;
+  margin: 0 auto 0.7rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(16, 20, 42, 0.92);
+  color: var(--muted);
+  font-size: 0.72rem;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 /* ══  room tasks panel ════════════════════════════════════════════ */
@@ -1780,18 +1978,19 @@ body::after {
 }
 .doodle-swatches { display: flex; gap: 0.3rem; }
 .swatch {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  border: 2px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5), inset 0 -2px 4px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.35);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.swatch:hover { transform: scale(1.2); }
+.swatch:hover { transform: scale(1.24) translateY(-1px); }
 .swatch.is-active {
   border-color: #fff;
-  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
-  transform: scale(1.15);
+  box-shadow: 0 0 0 2px #fff, 0 0 16px color-mix(in srgb, var(--sw, var(--accent)) 80%, transparent), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  transform: scale(1.18);
 }
 .doodle-sizes { display: flex; gap: 0.25rem; align-items: center; }
 .dsize {
@@ -2159,12 +2358,14 @@ body::after {
 .rb-swatch {
   width: 22px;
   height: 22px;
-  border-radius: 6px;
-  border: 1px solid var(--line);
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.35), 0 2px 5px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   padding: 0;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
-.rb-swatch:hover { transform: scale(1.14); border-color: #fff; }
+.rb-swatch:hover { transform: scale(1.16); box-shadow: 0 0 0 1.5px #fff, 0 0 12px color-mix(in srgb, var(--sw, var(--accent)) 75%, transparent); }
 .sheet-dim {
   color: var(--muted);
   font-size: 0.66rem;
@@ -2695,6 +2896,122 @@ body::after {
   padding: 0.4rem 0.7rem;
   border-radius: 10px;
 }
+/* 📌 pin-to-spotlight button — hidden until hover, but always visible on a
+   pinned tile or a screen-share tile (the is-hint pulse nudges you to look) */
+.call-pin {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  line-height: 1;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(6, 8, 20, 0.66);
+  color: var(--ink);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.15s ease, transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.call-tile:hover .call-pin,
+.call-pin.is-on,
+.call-pin.is-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+.call-pin:hover {
+  border-color: var(--accent);
+  transform: scale(1.14);
+}
+.call-pin.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.call-pin.is-hint {
+  border-color: var(--accent);
+  animation: call-pin-pulse 1.6s ease infinite;
+}
+@keyframes call-pin-pulse {
+  50% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+}
+/* 🖥 big-picture spotlight — the pinned tile blown up, object-fit:contain so a
+   shared screen is never cropped; sized to the viewport for responsiveness */
+.call-spotlight {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.6rem, 3vw, 2rem);
+  background: rgba(4, 6, 16, 0.72);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: claim-in 0.2s ease;
+}
+.call-spotlight-stage {
+  position: relative;
+  width: min(94vw, 1180px);
+  aspect-ratio: 16 / 9;
+  max-height: 86vh;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #05070f;
+  border: 1px solid var(--line);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.call-spotlight-stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #05070f;
+}
+.call-spotlight-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  background: linear-gradient(0deg, rgba(4, 6, 16, 0.85), transparent);
+}
+.call-spotlight-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.call-spotlight-unpin {
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(6, 8, 20, 0.6);
+  color: var(--ink);
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.call-spotlight-unpin:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
 .rail-btn.is-call.is-active {
   box-shadow: 0 0 0 2px #ff6b81, 0 0 18px rgba(255, 107, 129, 0.5);
 }
@@ -2712,11 +3029,19 @@ body::after {
 }
 .pad-frame > .viewer-panel {
   width: 100%;
-  height: var(--pad-h, auto);
+  /* definite height → the stage is a fixed box, so a zoomed pdf scrolls
+     INSIDE the container instead of stretching the whole web page. The default
+     sits BELOW max-height so the bottom-edge / corner height-drag has travel
+     (same fix as the code tool); drag it down to stretch, capped at the
+     no-page-scroll ceiling. */
+  height: var(--pad-h, calc(100vh - 19rem));
+  max-height: calc(100vh - 14rem);
+  min-height: 320px;
 }
 .tool-view.tool-viewer {
   width: auto;
   max-width: calc(100% - 7rem);
+  overflow: hidden; /* the viewer scrolls internally, never the page */
 }
 .viewer-head {
   display: flex;
@@ -2760,14 +3085,25 @@ body::after {
   border: 1px solid var(--line);
   background: #0d1023;
   overflow: auto;
+  scrollbar-gutter: stable; /* keep width constant so a scrollbar never re-triggers a refit loop */
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* flex-start (not center) so a zoomed page overflowing to the LEFT stays
+     reachable by scrolling; the frame's own auto-margins still center it */
+  align-items: flex-start;
   position: relative;
+}
+.viewer-stage.is-pan {
+  cursor: grab;
+}
+.viewer-stage.is-pan.is-grabbing {
+  cursor: grabbing;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .viewer-canvas {
   display: block;
-  margin: 8px auto;
+  margin: 0;
   border-radius: 6px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   background: #fff;
@@ -2786,8 +3122,126 @@ body::after {
 .viewer-img {
   max-width: 100%;
   height: auto;
-  margin: auto;
+  margin: 0;
   border-radius: 8px;
+}
+
+/* ✏️ collaborative annotation layer over the shared media */
+.viewer-annotate {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #10142a;
+}
+.va-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.va-tool {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  transition: all 0.14s ease;
+}
+.va-tool:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.va-tool.is-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.va-ico {
+  pointer-events: none;
+}
+.va-swatches,
+.va-sizes,
+.va-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.va-actions {
+  margin-left: auto;
+  gap: 0.4rem;
+}
+.viewer-frame {
+  position: relative;
+  display: inline-block;
+  /* size to the (possibly zoomed) canvas and stay centered via auto-margins;
+     no max-width cap, so a zoomed page grows the frame and the stage scrolls */
+  width: fit-content;
+  max-width: none;
+  margin: 8px auto;
+  line-height: 0;
+}
+.viewer-frame.is-video {
+  display: block;
+  width: 100%;
+}
+.viewer-marks {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  pointer-events: none; /* hands control back to the media unless a tool is armed */
+}
+.viewer-marks.is-armed {
+  pointer-events: auto;
+}
+.viewer-text-input {
+  position: absolute;
+  z-index: 3;
+  transform: translate(2px, -50%);
+  min-width: 70px;
+  background: rgba(16, 20, 42, 0.88);
+  border: 1px dashed var(--accent);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font: 700 15px ui-sans-serif, system-ui, sans-serif;
+  outline: none;
+}
+.viewer-mark-count {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+.viewer-zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--line);
+}
+.viewer-zoom-val {
+  min-width: 48px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+.viewer-zoom-val:hover {
+  border-color: var(--accent);
 }
 .viewer-loading {
   position: absolute;
@@ -2804,11 +3258,54 @@ body::after {
 }
 .viewer-err {
   align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
   background: rgba(255, 107, 129, 0.14);
   border-bottom: 1px solid #ff6b81;
   color: #ffb3bf;
   font-size: 0.72rem;
   padding: 0.5rem 0.8rem;
+}
+.viewer-err-msg {
+  flex: 1;
+  min-width: 0;
+}
+.viewer-err-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: none;
+}
+.viewer-err-btn {
+  border: 1px solid #ff6b81;
+  background: rgba(255, 107, 129, 0.18);
+  color: #ffd7dd;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.viewer-err-btn:hover {
+  background: rgba(255, 107, 129, 0.32);
+}
+.viewer-err-x {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 107, 129, 0.5);
+  background: transparent;
+  color: #ffb3bf;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+.viewer-err-x:hover {
+  background: rgba(255, 107, 129, 0.28);
+  color: #fff;
 }
 .viewer-empty {
   margin: auto;
@@ -2937,6 +3434,14 @@ body::after {
    💻 Group code — shared problem + per-person editor + live scoreboard.
    Reads the vibe variables so it re-themes with the rest of the room.
    ═══════════════════════════════════════════════════════════════════════ */
+/* THIS was the missing piece: without it the wrapper stays capped at
+   720px, so dragging the frame wider did nothing (sheet/doodle/sticky
+   all have this same override — that's why they "worked"). */
+.tool-view.tool-code {
+  width: auto;
+  max-width: calc(100% - 7rem);
+  overflow: hidden; /* IDE fills the frame; inner columns scroll — no stage bars */
+}
 .code-panel {
   display: flex;
   flex-direction: column;
@@ -2973,6 +3478,7 @@ body::after {
   gap: 0.5rem;
 }
 .code-gen textarea {
+  width: 100%;
   resize: vertical;
   min-height: 4.5rem;
   padding: 0.6rem 0.7rem;
@@ -3072,21 +3578,54 @@ body::after {
 }
 .code-run:disabled,
 .code-submit:disabled { opacity: 0.45; cursor: default; }
+/* CodeMirror host — dark IDE surface w/ syntax highlighting + line numbers.
+   oneDark paints the tokens; we just make bg transparent + borderless so it
+   melts into the room's card chrome. */
 .code-area {
   width: 100%;
   min-height: 15rem;
-  resize: vertical;
-  padding: 0.8rem 0.9rem;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: var(--bg2);
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.86rem;
-  line-height: 1.55;
+  background: #21252b; /* one-dark-pro bg — the "editor color" from the ref */
+  overflow: hidden;
   tab-size: 4;
 }
-.code-area:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+.code-area:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+.code-area .cm-editor { background: transparent; }
+.code-area .cm-editor.cm-focused { outline: none; }
+.code-area .cm-scroller {
+  font-family: var(--font-mono);
+  line-height: 1.6;
+}
+.code-area .cm-gutters {
+  background: transparent;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  color: #6b7280;
+}
+.code-area .cm-activeLine, .code-area .cm-activeLineGutter { background: rgba(255, 255, 255, 0.045); }
+.code-area .cm-content { padding: 0.7rem 0; }
+.code-area .cm-cursor { border-left-color: #afb8db; }
+
+/* language tabs (LeetCode-style pills) */
+.code-lang-tabs { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.code-lang-tab {
+  padding: 0.32rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.code-lang-tab:hover { color: var(--ink); border-color: var(--accent); }
+.code-lang-tab.is-active {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 35%, transparent);
+}
 .code-err {
   margin: 0;
   color: #ff8a8a;
@@ -3100,64 +3639,202 @@ body::after {
 }
 .code-verdict.is-ac { color: var(--accent2); }
 
-/* result + per-test breakdown */
+/* result banner + LeetCode-style per-test accordion.
+   Accepted is GREEN — that's the dopamine hit the whole tool is built around. */
 .code-result {
+  --ok: #00c853; /* the green users get excited about */
+  --bad: #ff6b6b;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--surface);
   overflow: hidden;
 }
-.code-result.is-ac { border-color: var(--accent2); }
+.code-result.is-ac {
+  border-color: color-mix(in srgb, var(--ok) 55%, transparent);
+  box-shadow: 0 0 26px -10px color-mix(in srgb, var(--ok) 70%, transparent);
+}
+.code-result.is-fail { border-color: color-mix(in srgb, var(--bad) 50%, transparent); }
+
 .code-verdict-bar {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.7rem;
-  background: none;
-  border: none;
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.84rem;
-  cursor: pointer;
-  text-align: left;
+  gap: 0.6rem;
+  padding: 0.75rem 0.95rem;
+  flex-wrap: wrap;
 }
-.code-result.is-ac .code-verdict-bar strong { color: var(--accent2); }
-.code-verdict-bar em { color: var(--muted); font-style: normal; font-size: 0.78rem; }
-.code-caret { color: var(--muted); }
+.code-verdict-main { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+.code-verdict-badge { font-weight: 800; font-size: 1.1rem; line-height: 1; }
+.code-verdict-bar strong {
+  font-family: var(--font-head);
+  font-size: 1.2rem;
+  color: var(--ink);
+}
+.code-verdict-score { font-weight: 700; font-size: 0.92rem; color: var(--ink); }
+.code-verdict-hint { color: var(--muted); font-size: 0.8rem; }
+.code-verdict-time {
+  color: var(--muted);
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.code-result.is-ac .code-verdict-badge,
+.code-result.is-ac .code-verdict-bar strong {
+  color: var(--ok);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--ok) 45%, transparent);
+}
+.code-result.is-fail .code-verdict-badge,
+.code-result.is-fail .code-verdict-bar strong { color: var(--bad); }
+
 .code-tests {
   list-style: none;
   margin: 0;
-  padding: 0 0.6rem 0.6rem;
+  padding: 0 0.7rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-}
-.code-tests li {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  align-items: start;
   gap: 0.5rem;
-  padding: 0.4rem 0.5rem;
-  border-radius: 8px;
-  background: var(--bg2);
 }
-.code-tests li.is-ac .code-tv { color: var(--accent2); }
-.code-tno { font-family: var(--font-mono); color: var(--muted); font-size: 0.78rem; }
-.code-tv { font-family: var(--font-mono); font-weight: 700; font-size: 0.78rem; color: #ff8a8a; }
-.code-hidden { color: var(--muted); font-size: 0.76rem; font-style: italic; }
-.code-tio {
-  grid-column: 1 / -1;
-  margin: 0.15rem 0 0;
+.code-test {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg2);
+  overflow: hidden;
+}
+.code-test.is-ac { border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.code-test.is-fail { border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
+.code-test-head {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+.code-test-head:disabled { cursor: default; }
+.code-test-title { font-weight: 600; }
+.code-test.is-ac .code-test-title { color: var(--ok); }
+.code-test.is-fail .code-test-title { color: var(--bad); }
+.code-test.is-hidden .code-test-title { color: var(--muted); }
+.code-test-meta { display: flex; align-items: center; gap: 0.5rem; }
+.code-test-meta em {
+  color: var(--muted);
+  font-style: normal;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.76rem;
+}
+.code-caret { color: var(--muted); font-size: 0.7rem; }
+
+.code-test-body { padding: 0.1rem 0.75rem 0.8rem; border-top: 1px solid var(--line); }
+.code-io-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 0.65rem 0 0.25rem;
+}
+.code-io-label.exp { color: var(--ok); }
+.code-io-label.got { color: #ffb26b; }
+.code-io {
+  margin: 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: #0d1017;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  color: var(--muted);
+  color: var(--ink);
 }
-.code-tio b { color: var(--ink); opacity: 0.7; margin-right: 0.3rem; }
+.code-io-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.code-io-exp { background: color-mix(in srgb, var(--ok) 8%, #0d1017); }
+.code-io-got { background: color-mix(in srgb, #ffb26b 8%, #0d1017); }
+.code-io-got.is-match { background: color-mix(in srgb, var(--ok) 10%, #0d1017); }
+.code-hidden { color: var(--muted); font-size: 0.74rem; font-style: italic; }
+@media (max-width: 560px) {
+  .code-io-row { grid-template-columns: 1fr; }
+}
+/* submit result: runtime + memory stat cards (LeetCode style) */
+.code-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  padding: 0 0.95rem 0.9rem;
+}
+.code-stat {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg2);
+  padding: 0.75rem 0.9rem;
+}
+.code-stat-title { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.4rem; }
+.code-stat-value {
+  font-family: var(--font-head);
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+.code-stat-sub { color: var(--muted); font-size: 0.72rem; margin-top: 0.45rem; line-height: 1.4; }
+.code-cached-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.16rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: color-mix(in srgb, var(--accent) 85%, white);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.code-test-cached { color: var(--muted); font-weight: 400; font-size: 0.76rem; margin-left: 0.35rem; }
+
+/* close buttons + dismissible error box + codeprep stderr detail */
+.code-verdict-main { flex: 1; }
+.code-verdict-right { display: flex; align-items: center; gap: 0.5rem; flex: none; }
+.code-close {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.code-close:hover { color: var(--ink); border-color: var(--accent); }
+.code-err-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 107, 107, 0.5);
+  background: rgba(255, 90, 90, 0.09);
+  color: #ff8a8a;
+  font-size: 0.82rem;
+}
+.code-err-msg { flex: 1; word-break: break-word; }
+.code-io-label.err { color: #ff6b6b; }
+.code-io-err {
+  background: rgba(255, 80, 80, 0.09);
+  border-color: rgba(255, 107, 107, 0.4);
+  color: #ffb3b3;
+}
 .code-draft {
   color: var(--muted);
   font-size: 0.72rem;
@@ -3192,7 +3869,10 @@ body::after {
   background: var(--surface);
   font-size: 0.85rem;
 }
-.code-board li.is-ac { border-left: 3px solid var(--accent2); }
+.code-board li.is-ac {
+  border-left: 3px solid #00c853;
+  background: color-mix(in srgb, #00c853 8%, var(--surface));
+}
 .code-rank { text-align: center; }
 .code-who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .code-res {
@@ -3200,4 +3880,373 @@ body::after {
   font-size: 0.78rem;
   color: var(--muted);
 }
+.code-board li.is-ac .code-res { color: #00c853; font-weight: 700; }
 .code-empty { color: var(--muted); font-size: 0.82rem; margin: 0; }
+
+/* ── v2: two-column IDE layout + card chrome ─────────────────────────── */
+.code-panel {
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 1.15rem 1.25rem 1.3rem;
+  box-shadow: 0 24px 60px -34px rgba(0, 0, 0, 0.65);
+  /* bound to the frame height so the PAGE never scrolls — only the inner
+     grid / textarea do. Kills the phantom vertical+horizontal stage bars. */
+  height: var(--pad-h, auto);
+  max-height: calc(100vh - 13rem);
+  overflow: hidden;
+}
+/* thin, subtle scrollbars inside the code studio (no chunky native bars) */
+.code-panel * { scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, 0.4) transparent; }
+.code-panel ::-webkit-scrollbar { width: 10px; height: 10px; }
+.code-panel ::-webkit-scrollbar-track { background: transparent; }
+.code-panel ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.32);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  -webkit-background-clip: content-box;
+  background-clip: content-box;
+}
+.code-panel ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.55); -webkit-background-clip: content-box; background-clip: content-box; }
+.code-panel ::-webkit-scrollbar-corner { background: transparent; }
+.code-head {
+  padding-bottom: 0.9rem;
+  margin-bottom: 0.2rem;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.code-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(380px, 1.35fr);
+  gap: 1rem;
+  align-items: start;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.code-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+}
+.code-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+}
+.code-card-title {
+  font-family: var(--font-head);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
+  color: var(--muted);
+  margin-bottom: 0.7rem;
+}
+.code-problem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.code-statement pre {
+  max-height: 15rem;
+  overflow: auto;
+}
+.code-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.code-area {
+  min-height: 27rem;
+}
+.code-board {
+  border-top: none;
+  padding-top: 0;
+}
+.code-board ol {
+  gap: 0.35rem;
+}
+@media (max-width: 860px) {
+  .code-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── phase 1: setup (generator only) ─────────────────────────────────── */
+.code-setup .code-gen-card {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.code-setup .code-gen {
+  flex: 1;
+  min-height: 0;
+}
+.code-setup .code-gen textarea {
+  flex: 1;
+  min-height: 0;
+  resize: none;
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+.code-gen-card .code-gen button {
+  align-self: center;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.95rem;
+  flex: none;
+}
+
+/* ── header actions ──────────────────────────────────────────────────── */
+.code-head .code-regen {
+  margin-left: auto;
+  align-self: center;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 0.78rem;
+}
+.code-head .code-regen:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+/* ── phase 2: studio fills the frame, only editor/scoreboard scroll ──── */
+/* force a DEFINITE, viewport-filling height so the grid rows, the pinned
+   scoreboard and the editor↔output split all resolve — works on plain
+   hot-reload, no hard refresh / cached frame size needed. */
+.code-panel.code-studio {
+  /* starts below the ceiling so the bottom/corner drag has real travel;
+     max-height is the no-scrollbar fill cap (drag down to reach it) */
+  height: var(--pad-h, calc(100vh - 19rem));
+  max-height: calc(100vh - 14rem);
+}
+.code-studio .code-grid {
+  align-items: stretch;
+  grid-template-rows: minmax(0, 1fr); /* row = grid height → columns are bounded */
+  overflow: hidden; /* columns scroll internally, not the whole grid */
+}
+.code-studio .code-col {
+  min-height: 0;
+}
+.code-studio .code-editor {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden; /* children manage their own scroll */
+}
+.code-studio .code-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.code-studio .code-area {
+  min-height: 4rem;
+  overflow: hidden;
+  resize: none;
+}
+/* draggable divider between editor and output (row-resize = vertical drag) */
+.code-vsplit {
+  flex: none;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: row-resize;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin: 3px 0;
+  background: transparent;
+  touch-action: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.code-vsplit:hover,
+.code-body.is-dragging .code-vsplit {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.code-vsplit-grip {
+  width: 46px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.5;
+}
+.code-vsplit:hover .code-vsplit-grip,
+.code-body.is-dragging .code-vsplit-grip {
+  background: var(--accent);
+  opacity: 1;
+}
+.code-body.is-dragging {
+  cursor: row-resize;
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* the verdict / stats / test accordion scrolls inside the editor card so
+   long results are always reachable without the frame overflowing */
+/* children must NOT shrink — otherwise the result box gets squeezed to the
+   output's share and its own overflow:hidden clips the expanded body + lower tests */
+.code-studio .code-output > * { flex-shrink: 0; }
+.code-studio .code-output {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-right: 0.15rem;
+}
+/* left column: problem scrolls, scoreboard stays pinned at the bottom */
+.code-studio .code-problem {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.code-studio .code-statement {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.code-studio .code-statement pre {
+  max-height: none;
+}
+.code-studio .code-board {
+  flex: 0 0 auto;
+  height: 40%; /* FIXED box — same size whether 3 rows or 30 */
+  min-height: 9rem; /* always room for ~3 rows */
+  max-height: 16rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* clip instead of spill when rows exceed the box */
+}
+.code-studio .code-board .code-card-title {
+  flex: none; /* header stays put while the list scrolls under it */
+}
+.code-studio .code-board ol {
+  flex: 1 1 auto;
+  overflow-y: auto; /* vertical scroller inside the fixed box */
+  min-height: 0;
+  padding-right: 4px;
+}
+
+/* ══  📱 responsive — the shell was desktop-only; these adapt it for tablets
+       and phones WITHOUT touching the desktop layout above the breakpoints ── */
+
+/* tablet / small laptop */
+@media (max-width: 900px) {
+  .topbar {
+    gap: 0.6rem;
+    padding: 0.6rem clamp(0.7rem, 3vw, 1.4rem);
+  }
+  .brand h1 {
+    font-size: 1.1rem;
+  }
+  .top-right {
+    gap: 0.6rem;
+  }
+  /* reaction strip drops to its own scrollable row instead of crowding the bar */
+  .react-strip {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .react-strip::-webkit-scrollbar {
+    display: none;
+  }
+  .tool-view {
+    width: min(720px, calc(100% - 4.5rem));
+  }
+  .call-tile {
+    width: 150px;
+  }
+  .call-tile.is-sharing {
+    width: 210px;
+  }
+}
+
+/* phone */
+@media (max-width: 620px) {
+  .topbar {
+    padding: 0.55rem 0.7rem;
+  }
+  .pad-tag {
+    display: none;
+  }
+  .brand h1 {
+    font-size: 1rem;
+  }
+  .status-row {
+    gap: 0.4rem;
+    padding: 0 0.5rem;
+  }
+  /* the rail is a fixed left strip — give the pad + tools room so nothing hides
+     behind it, and shrink the buttons a touch */
+  .tool-rail {
+    gap: 0.25rem;
+    max-height: 82vh;
+    overflow-y: auto;
+  }
+  .rail-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 1.05rem;
+  }
+  .stage {
+    padding-left: 3.4rem;
+    padding-right: 0.7rem;
+  }
+  /* tools fill the space between the rail and the right edge (not centered,
+     which would slide them back under the rail) */
+  .tool-view {
+    width: auto;
+    margin: 1rem 0.7rem 4.5rem 3.2rem;
+  }
+  .foot {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    text-align: center;
+  }
+  .foot span {
+    font-size: 0.62rem;
+  }
+  /* call strip: smaller tiles + wrapping control bar so it never overflows */
+  .call-strip {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    gap: 0.35rem;
+    max-width: calc(100vw - 1rem);
+  }
+  .call-tile {
+    width: 116px;
+  }
+  .call-tile.is-sharing {
+    width: 158px;
+  }
+  .call-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+    border-radius: 16px;
+    max-width: calc(100vw - 1rem);
+  }
+  .call-live {
+    width: 100%;
+    text-align: center;
+  }
+  /* spotlight fills the small screen with a little breathing room */
+  .call-spotlight {
+    padding: 0.5rem;
+  }
+  .call-spotlight-stage {
+    width: 100%;
+    max-height: 80vh;
+  }
+}
