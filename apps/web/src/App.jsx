@@ -24,6 +24,7 @@ import TasksPanel from './components/TasksPanel.jsx'
 import DoodlePanel from './components/DoodlePanel.jsx'
 import StickyWall from './components/StickyWall.jsx'
 import SheetPanel from './components/SheetPanel.jsx'
+import CodePanel from './components/CodePanel.jsx'
 import ViewerPanel from './components/ViewerPanel.jsx'
 import SaveButton from './components/SaveButton.jsx'
 import { padMarkdown } from './lib/export.js'
@@ -52,6 +53,7 @@ export default function App() {
   const doodlesArray = useMemo(() => ydoc.getArray('doodles'), [ydoc])
   const stickiesMap = useMemo(() => ydoc.getMap('stickies'), [ydoc])
   const sheetMap = useMemo(() => ydoc.getMap('sheet'), [ydoc])
+  const codeMap = useMemo(() => ydoc.getMap('code'), [ydoc])
   const viewerMap = useMemo(() => ydoc.getMap('viewer'), [ydoc])
   const callMap = useMemo(() => ydoc.getMap('call'), [ydoc])
 
@@ -529,6 +531,19 @@ export default function App() {
               ]}
             >
               <SheetPanel sheet={sheetMap} />
+            </PadFrame>
+          )}
+          {tool === 'code' && (
+            <PadFrame
+              storeKey="syncpad-code-size"
+              defaultSize={{ w: 900, h: 0 }}
+              presets={[
+                { id: 'S', w: 620 },
+                { id: 'M', w: 900 },
+                { id: 'L', w: 1180 },
+              ]}
+            >
+              <CodePanel code={codeMap} identity={identity} myClientId={myClientId} />
             </PadFrame>
           )}
           {tool === 'viewer' && (

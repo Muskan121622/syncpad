@@ -51,6 +51,23 @@ export function fetchStreak(padId) {
     .catch(() => ({ count: 0 })) // API down → hide the chip gracefully
 }
 
+// 💻 Group-code tool: both calls go through OUR server (/code/*) which attaches
+// the provider bearer server-side. The browser never sees the cpk_ secret.
+async function postJson(path, payload) {
+  const r = await fetch(`${HISTORY_URL}${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(data.error || `request failed (${r.status})`)
+  return data
+}
+
+export const generateProblem = (rawStatement) => postJson('/code/problems', { rawStatement })
+
+export const submitCode = (payload) => postJson('/code/submissions', payload)
+
 export function getPad(padId) {
   if (cache.has(padId)) return cache.get(padId)
 

@@ -8,6 +8,7 @@ export const TOOLS = [
   { id: 'doodle', icon: '🎨', label: 'doodle board' },
   { id: 'sticky', icon: '📌', label: 'sticky wall' },
   { id: 'sheet', icon: '🧮', label: 'the sheet' },
+  { id: 'code', icon: '💻', label: 'group code' },
   { id: 'viewer', icon: '📽', label: 'shared viewer' },
 ]
 

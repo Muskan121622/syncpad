@@ -272,6 +272,90 @@ async function handleTurn(res) {
   }
 }
 
+// ── Group-code judge proxy: POST /code/problems · /code/submissions ───────
+// Same trust boundary as /turn: the codeprep provider key (cpk_…) is a SECRET
+// and the frontend is public, so the browser can NEVER call the judge API
+// directly. It calls US; we attach the bearer and forward. We pass the
+// provider's verdict JSON straight back so the client sees the real shape.
+//
+// Env (set on Render): CODEPREP_API (…/api/v1 base), CODEPREP_API_KEY (cpk_…).
+// Unset → 503 and the tool shows "judge not configured" (rest of app fine).
+function readJsonBody(req, limit = 1_000_000) {
+  return new Promise((resolve, reject) => {
+    let data = ''
+    req.on('data', (c) => {
+      data += c
+      if (data.length > limit) {
+        reject(new Error('payload too large'))
+        req.destroy()
+      }
+    })
+    req.on('end', () => {
+      try {
+        resolve(data ? JSON.parse(data) : {})
+      } catch {
+        reject(new Error('invalid JSON body'))
+      }
+    })
+    req.on('error', reject)
+  })
+}
+
+async function handleCode(req, res) {
+  res.setHeader('access-control-allow-origin', '*')
+  res.setHeader('access-control-allow-headers', 'content-type')
+  res.setHeader('access-control-allow-methods', 'POST, OPTIONS')
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204)
+    res.end()
+    return
+  }
+  const { CODEPREP_API, CODEPREP_API_KEY } = process.env
+  if (!CODEPREP_API || !CODEPREP_API_KEY) {
+    res.writeHead(503, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({ error: 'code judge not configured on server' }))
+    return
+  }
+  const kind = /^\/code\/(problems|submissions)$/.exec(req.url || '')?.[1]
+  const upstream = kind === 'problems' ? '/problems/generate' : '/submissions'
+  let body
+  try {
+    body = await readJsonBody(req)
+  } catch (err) {
+    res.writeHead(400, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({ error: err.message }))
+    return
+  }
+  // Whitelist only the fields the provider needs — never echo/leak anything else.
+  const payload =
+    kind === 'problems'
+      ? { rawStatement: String(body.rawStatement || '').slice(0, 20000) }
+      : {
+          problemId: body.problemId,
+          language: String(body.language || 'python3').slice(0, 32),
+          sourceCode: String(body.sourceCode || '').slice(0, 100000),
+          mode: body.mode === 'run' ? 'run' : 'submit',
+          style: String(body.style || 'stdin').slice(0, 16),
+        }
+  try {
+    const base = CODEPREP_API.replace(/\/+$/, '')
+    const r = await fetch(`${base}${upstream}`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${CODEPREP_API_KEY}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+    const text = await r.text()
+    res.writeHead(r.status, { 'content-type': 'application/json' })
+    res.end(text) // verbatim verdict passthrough
+  } catch (err) {
+    res.writeHead(502, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({ error: `judge upstream failed: ${err.message}` }))
+  }
+}
+
 // ── History API: GET /history/<pad> → [{ t, who, u(base64) }, …] ──────────
 // Returns true when WE answered the request, false when the path isn't ours —
 // so the same function can run on its own port (dev) or layered onto
@@ -282,6 +366,12 @@ function apiHandler(req, res) {
   // GET /turn → freshly minted iceServers (async, owns its response)
   if (/^\/turn\b/.test(req.url || '')) {
     handleTurn(res)
+    return true
+  }
+
+  // POST /code/problems · /code/submissions → judge proxy (async, owns response)
+  if (/^\/code\/(problems|submissions)$/.test(req.url || '')) {
+    handleCode(req, res)
     return true
   }
 
