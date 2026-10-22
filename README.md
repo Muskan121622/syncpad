@@ -1,106 +1,167 @@
-# SyncPad
+# SyncPad ✦
 
-**Where you make stuff together, live.** A collaborative study workspace: shared pad,
-tasks, spreadsheet, doodle board, sticky wall, focus timer — real-time synced between
-everyone in the room, with rewind history and session recap export.
+> **Where you make stuff together, live.** A real-time collaborative study workspace —
+> shared pad, tasks, spreadsheet, doodle board, sticky wall, group code, shared viewer,
+> a full WebRTC **study call** with live screen-share **annotation**, time-travel rewind,
+> and a downloadable **session recap** — all CRDT-synced between everyone in the room.
 
-## How sharing works
+**🔴 Live demo →** [syncpad-rust.vercel.app](https://syncpad-rust.vercel.app)
+**⚙️ Backend (ws + REST) →** [syncpad-99lv.onrender.com](https://syncpad-99lv.onrender.com/health)
 
-Every visit to the app mints a **random 12-char room key** (`/r/k7m2xq9p4tgb`). There is
-no shared default room — you and your study buddies are alone in yours. The URL carries
-the current tool too:
+---
+
+## 💎 What makes it special
+
+Most "collab editors" stop at a shared textarea. SyncPad is a whole **room** — one random
+URL, zero accounts, and everything converges offline-first through CRDTs.
+
+| Tool | What it does |
+| ---- | ------------ |
+| 📝 **Type pad** | TipTap + Yjs rich-text with **per-line authorship**, live cursors, double-click reactions |
+| ✅ **Room tasks** | Shared checklist, synced in real time |
+| 🎨 **Doodle board** | Freehand canvas everyone can draw on at once |
+| 📌 **Sticky wall** | Post-it board for brainstorming |
+| 🧮 **The sheet** | Google-Sheets-style collaborative spreadsheet |
+| 💻 **Group code** | Multi-language editor (C++/Java/Python) + AI problem generator, judged server-side |
+| 📽 **Shared viewer** | Present PDFs/media to the room — synced zoom, page, and pointer |
+| 🎥 **Study call** | Peer-to-peer video/audio, **screen share**, 📌 **pin-to-spotlight**, and **draw-on-their-screen** annotation (pen, colors, ✂️ cut, collapse) |
+| 📊 **Session recap** | A 1080×1920 "story card" PNG — words, grind time, who-built-what %, CRDT snapshots |
+
+Plus the vibe layer: **14 one-click themes** (Midnight → Coquette → Vaporwave → Matcha →
+Terminal …) that repaint the entire app via CSS variables, and a **time-rewind** scrubber
+that replays the room's history from encoded CRDT state vectors.
+
+---
+
+## 🧠 Architecture
 
 ```
-https://<your-frontend>/r/<roomKey>            → pad
-https://<your-frontend>/r/<roomKey>/sheet      → spreadsheet
-https://<your-frontend>/r/<roomKey>/tasks …    → any other tool
+Browser ──ws──▶ Hocuspocus (Yjs) ──▶ .ydoc snapshots + NDJSON edit log on disk
+   │
+   ├── WebRTC (P2P media)  ◀── signaling over the SAME Yjs doc (a `call` map)
+   │        └── TURN relay minted on demand by GET /turn (Xirsys), STUN fallback
+   │
+   └── REST (same port)    /history  /streak  /health  /turn  /code/*
+                            └── /code/* proxies to the Codeprep judge so the
+                                cpk_ API key never touches the browser bundle
 ```
 
-Old `?p=<key>&t=<tool>` links still work and get rewritten to the pretty form.
-Copy the link from the **Share** popover; the recap card prints it as a plain label.
+**Two ideas do all the heavy lifting:**
 
-## Repo layout
+1. **CRDT-first.** Every tool is a shared `Y.Doc` type. Edits merge without a central
+   lock, work offline, and reconcile on reconnect (`y-indexeddb` keeps a local mirror).
+2. **One connection, everything.** WebRTC signaling and screen-share annotation reuse the
+   same Yjs map — no separate socket, no rooms server. The `call` map carries presence,
+   SDP offers/answers, and the `d:*` annotation strokes.
+
+---
+
+## 🛠 Tech stack
+
+**Frontend** — React 18 · Vite 6 · TipTap 2 (+ Collaboration & CollaborationCursor) ·
+Yjs · `@hocuspocus/provider` · CodeMirror 6 · `pdfjs-dist` · `y-indexeddb` · WebRTC
+
+**Backend** — Node · `@hocuspocus/server` · `@hocuspocus/extension-redis` (optional
+horizontal scaling) · `ioredis` · Yjs · a hand-rolled single-port REST layer
+
+**Infra** — Vercel (static frontend) · Render / Fly / Railway (stateful ws backend +
+volume) · Xirsys (TURN) · Codeprep/Judge0 (code execution)
+
+---
+
+## 📦 Repo layout
 
 ```
-apps/web      React + Vite frontend (Tiptap/Yjs editor, sheets, doodle, …)
-apps/server   Node CRDT server (Hocuspocus + Yjs) + rewind/streak REST API
+apps/web      React + Vite frontend (editor, sheets, doodle, call, recap, …)
+apps/server   Node CRDT server (Hocuspocus + Yjs) + rewind/streak/code REST API
 scripts/      dev orchestrator + history verification
-vercel.json   frontend build config (root-level, workspace-aware)
-fly.toml      backend deploy config (Railway alternative: railway.toml)
+vercel.json   frontend build config (workspace-aware, SPA rewrites)
+fly.toml      backend deploy config (Railway alt: railway.toml; Render uses the Dockerfile)
 ```
 
-## Local development
+---
+
+## 🚀 Local development
 
 ```bash
 npm install
-npm run dev        # web on :5173, ws server on :1234, history API on same port
+npm run dev        # web on :5173 · ws + REST on :1234
 ```
 
-No env vars needed locally: the client defaults to `ws://<host>:1234`.
+No env vars needed locally — the client defaults to `ws://<host>:1234`. The code-judge
+and TURN features degrade gracefully (a friendly "not configured" note) until you add keys.
 
-## Deployment (two pieces)
+---
 
-The app is a **static frontend** plus a **stateful websocket backend**. Deploy both,
-then point the frontend at the backend.
+## ☁️ Deployment (two pieces)
 
-### 1. Backend — Fly.io (or Railway/Render — anything with one port + a volume)
+A **static frontend** plus a **stateful websocket backend**. Deploy both, then point the
+frontend at the backend.
 
-The server intentionally runs websocket **and** REST (`/history`, `/streak`, `/health`)
-on a single port (`SINGLE_PORT=1`), because PaaS platforms expose exactly one.
+### 1. Backend — Render (or Fly / Railway — anything with one port + a volume)
 
+The server serves websocket **and** REST (`/history`, `/streak`, `/health`, `/turn`,
+`/code/*`) on a **single port** (`SINGLE_PORT=1`), because PaaS platforms expose exactly one.
+
+**Render:** New → Web Service → connect this repo → root `apps/server`, Docker runtime
+([`apps/server/Dockerfile`](apps/server/Dockerfile)). Add a **Disk** mounted at `/data`.
+
+**Fly:**
 ```bash
-# from the repo root
-fly launch --copy-empty          # or: fly apps create syncpad-ws
+fly launch --copy-empty
 fly volumes create syncpad_data --size 1 --app syncpad-ws   # persistence!
-fly deploy
-fly open                         # verify https://syncpad-ws.fly.dev/health → 200
+fly deploy && fly open        # verify /health → 200
 ```
 
-- Config lives in [`fly.toml`](fly.toml); the image is [`apps/server/Dockerfile`](apps/server/Dockerfile).
-- **The volume matters.** Without `/data` mounted, pad snapshots and edit logs are lost
-  on every deploy/restart (live sync still works — the bug only shows up later).
-- Railway works too (`railway.toml`, same Dockerfile); attach a volume at `/data` there
-  as well.
+> ⚠️ **The volume matters.** Without `/data` mounted, pad snapshots and edit logs are lost
+> on every restart — live sync still works, so the bug only shows up later.
+
+| Backend env var | Value / default | Notes |
+| --------------- | --------------- | ----- |
+| `PORT` | injected by the PaaS | never hardcode |
+| `SINGLE_PORT` | `1` | REST shares the ws port (required on Render/Fly) |
+| `DATA_DIR` | `/data` | point at the mounted volume |
+| `REDIS_URL` | _unset_ | only needed to scale to multiple instances |
+| `XIRSYS_PATH` / `_IDENT` / `_SECRET` / `_CHANNEL` | _unset_ | enables cross-network TURN; STUN-only if blank |
+| `CODEPREP_API` / `CODEPREP_API_KEY` | _unset_ | enables 💻 group-code judging; 503 if blank |
+
+Details in [`apps/server/.env.example`](apps/server/.env.example). **Secrets live only
+here** — the browser never sees the `cpk_` key or the Xirsys secret.
 
 ### 2. Frontend — Vercel
 
-From the **repo root**:
+From the **repo root**, import the repo (Vercel auto-detects `vercel.json`, which builds
+`apps/web` and rewrites deep links like `/r/<key>/sheet`). One required env var:
+
+| Env var | Value | When |
+| ------- | ----- | ---- |
+| `VITE_WS_URL` | `wss://<backend-host>` (e.g. `wss://syncpad-99lv.onrender.com`) | after step 1 |
 
 ```bash
-vercel --prod
-```
-
-`vercel.json` handles everything (workspace build `apps/web/dist`, SPA rewrites so deep
-links like `/r/<key>/sheet` resolve, immutable asset caching). One required setting:
-
-| Env var             | Value                                   | When                       |
-| ------------------- | --------------------------------------- | -------------------------- |
-| `VITE_WS_URL`       | `wss://<backend-host>` (e.g. `wss://syncpad-ws.fly.dev`) | after step 1 |
-
-```bash
-vercel env add VITE_WS_URL production   # then: vercel --prod (rebuild picks it up)
+vercel env add VITE_WS_URL production
+vercel --prod        # rebuild picks it up
 ```
 
 The REST URL is derived from `VITE_WS_URL` automatically (same host, `https:`). Set
 `VITE_HISTORY_URL` only if you split the API onto a different host.
 See [`apps/web/.env.example`](apps/web/.env.example).
 
-### 3. Verify the deployed app
+---
 
-1. Open the frontend URL → you land on `/r/<fresh-random-key>`.
-2. Load the same URL in a second browser/incognito window → **both windows must be in
-   the same room**, and a third visit to the bare root must *not* join them.
-3. Type in the pad, check presence dots, rewind slider, and recap card link.
-4. Server log should show one `stateless`-style connection pair per browser, no
-   `failed to fetch` from the client console (that would mean a wrong `VITE_WS_URL`).
+## ✅ Verify a deployment
 
-## Backend env vars (cheat sheet)
+1. Open the frontend → you land on `/r/<fresh-random-key>`.
+2. Same URL in a second browser/incognito → **both are in one room**; a third visit to the
+   bare root must **not** join them.
+3. Type in the pad → watch presence dots, the rewind slider, and the 📊 recap card link.
+4. Start a 🎥 call → share a screen → 📌 pin it → draw on it from the other window.
+5. Server log shows one connection per browser; the client console has **no** `failed to
+   fetch` (that would mean a wrong `VITE_WS_URL`).
 
-| Var           | Default        | Notes                                            |
-| ------------- | -------------- | ------------------------------------------------ |
-| `PORT`        | injected by PaaS | never hardcode                                   |
-| `SINGLE_PORT` | `0`            | `1` on Fly/Railway — REST shares the ws port     |
-| `DATA_DIR`    | `./data`       | point at a volume in production                  |
-| `REDIS_URL`   | unset          | only needed to scale to multiple server instances |
+---
 
-Details in [`apps/server/.env.example`](apps/server/.env.example).
+<p align="center">
+  <sub>Built as a portfolio-grade deep dive into <b>CRDTs</b>, <b>WebRTC</b>, and <b>PaaS
+  infra</b> — offline-first sync, single-port stateful deploys, and zero-trust secret
+  handling included. 💜</sub>
+</p>
