@@ -16,27 +16,32 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+// 🌐 ICE servers. STUN only DISCOVERS a direct path; across two different-city
+// NATs (Delhi↔Mumbai) / symmetric NAT / AP-isolating routers there IS no direct
+// path, so a TURN RELAY is mandatory for media to ever flow. The old hardcoded
+// OpenRelay creds are dead (0 relay candidates in the field) — TURN now comes
+// from env so we can point at our own coturn on Oracle Free Tier. Set these in
+// Vercel (VITE_TURN_URLS / VITE_TURN_USER / VITE_TURN_PASS); left blank the app
+// still works on LAN / direct-P2P networks, just not across hard NATs.
+const TURN_URLS = (import.meta.env.VITE_TURN_URLS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+
 const RTC_CONFIG = {
   iceServers: [
     { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
-    // 🆘 Free public TURN relay (OpenRelay/Metered). STUN only DISCOVERS a
-    // direct path; when both laptops sit behind symmetric NAT or an
-    // AP-isolating router (very common on Indian ISPs), there IS no direct
-    // path — without this relay entry the call silently connects to nothing:
-    // tiles dark, no audio, while CRDT text keeps syncing happily.
-    {
-      urls: [
-        'turn:global.relay.metered.ca:80',
-        'turn:global.relay.metered.ca:80?transport=tcp',
-        'turn:global.relay.metered.ca:443',
-        'turn:global.relay.metered.ca:443?transport=tcp',
-      ],
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
+    ...(TURN_URLS.length
+      ? [
+          {
+            urls: TURN_URLS,
+            username: import.meta.env.VITE_TURN_USER,
+            credential: import.meta.env.VITE_TURN_PASS,
+          },
+        ]
+      : []),
   ],
-  // Gather relay candidates BEFORE the one-shot SDP is written to the CRDT —
-  // with TURN in play, 3.5s was too tight and shipped SDP without the relay.
+  // Gather relay candidates BEFORE the one-shot SDP is written to the CRDT.
   iceCandidatePoolSize: 4,
 }
 
@@ -52,6 +57,7 @@ function dbg(...args) {
   console.log(`%c🎥 ${line}`, 'color:#8b7cf6')
 }
 dbg(`boot: room=${(location.href.match(/\/r\/([a-z0-9]+)/i) || [])[1] ?? '?'} ua=${navigator.userAgent.slice(0, 60)}`)
+dbg(`ice: TURN ${TURN_URLS.length ? `ON → ${TURN_URLS.join(' , ')}` : 'OFF (STUN only — will fail across hard NAT)'}`)
 globalThis.copyCallLog = async () => {
   await navigator.clipboard.writeText(LOG.join('\n'))
   console.log('📋 full call trace copied — paste it in chat')
@@ -88,6 +94,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   const pcs = useRef(new Map()) // peerId -> RTCPeerConnection
   const streams = useRef(new Map()) // peerId -> MediaStream (for tile <video> src)
   const retries = useRef(new Map()) // peerId -> re-offer attempts (anti-loop)
+  const offered = useRef(new Set()) // peerId -> we already sent the FIRST offer
   const selfRef = useRef(null)
   const started = useRef(false)
 
@@ -162,6 +169,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     pcs.current.delete(id)
     streams.current.delete(id)
     retries.current.delete(id)
+    offered.current.delete(id)
     setDiag((d) => {
       const n = { ...d }
       delete n[id]
@@ -284,6 +292,9 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     }
     const { type, sdp } = msg
     if (type === 'offer') {
+      // dedupe: the re-poll below can hand us the SAME offer again; if a pc
+      // already exists for this peer we've answered once — don't renegotiate.
+      if (pcs.current.has(msg._from)) return
       dbg(`signal: ← offer from=${msg._from} cands=${candCount(sdp)}`)
       const pc = ensurePc(msg._from)
       await pc.setRemoteDescription(sdp)
@@ -332,10 +343,15 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
       if (body.type === 'offer') handleMsg({ ...body, _from: from })
       else if (body.type === 'answer') handleMsg({ ...body, _from: from })
     }
-    // smaller id initiates toward newly-seen peers with no pc yet
+    // smaller id initiates ONCE toward a peer it's never contacted; after the
+    // first offer the failure handler (capped retries) owns any re-negotiation,
+    // so the 2.5s re-poll never turns into an endless re-offer loop.
     for (const id of Object.keys(next)) {
       const peerId = Number(id)
-      if (myClientId < peerId && !pcs.current.has(peerId)) sendOffer(peerId)
+      if (myClientId < peerId && !pcs.current.has(peerId) && !offered.current.has(peerId)) {
+        offered.current.add(peerId)
+        sendOffer(peerId)
+      }
     }
   }
 
@@ -343,7 +359,16 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     const obs = () => syncFromMap()
     call.observe(obs)
     syncFromMap() // catch anyone already in the call
-    return () => call.unobserve(obs)
+    // 🪤 safety net: a CRDT-map signaling channel can MISS an offer/answer if
+    // the peer mounts during the other side's ICE-gather window (observe only
+    // fires on the change event, not for entries already sitting in the map at
+    // subscribe time across a reconnect). Re-poll so negotiation always
+    // converges — the dedupe guards above make repeat passes harmless.
+    const poll = setInterval(syncFromMap, 2500)
+    return () => {
+      call.unobserve(obs)
+      clearInterval(poll)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -407,12 +432,16 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     pcs.current.get(peerId)?.close()
     pcs.current.delete(peerId)
     retries.current.delete(peerId)
+    offered.current.delete(peerId)
     for (const k of [...call.keys()]) {
       if (k.startsWith(`m:${myClientId}>${peerId}`) || k.startsWith(`m:${peerId}>${myClientId}`)) call.delete(k)
     }
     noteDiag(peerId, { conn: 'connecting', path: null })
-    if (myClientId < peerId) sendOffer(peerId)
-    else call.set(`p:${myClientId}`, selfEntry())
+    // manual tap = user intent, so the smaller-id glare rule no longer applies:
+    // either side may re-offer. The offer-dedupe guard absorbs the rare case
+    // where BOTH tap retry at the same instant.
+    offered.current.add(peerId)
+    sendOffer(peerId)
   }
 
   const leave = () => {
