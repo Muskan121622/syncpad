@@ -87,6 +87,7 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   const offered = useRef(new Set()) // peerId -> we already sent the FIRST offer
   const selfRef = useRef(null)
   const started = useRef(false)
+  const mediaReady = useRef(false) // true only once our own cam/mic track exists
 
   // ── media in ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -115,7 +116,9 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
       if (dead || !localStream.current) return
       await iceReady // ensure relay list is loaded before we appear in any call
       if (selfRef.current) selfRef.current.srcObject = localStream.current
+      mediaReady.current = true // only NOW are we allowed to offer/answer
       announce(true)
+      syncFromMap() // media is live: process any queued offers + initiate ours
     }
     grab()
     return () => {
@@ -276,12 +279,16 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   }
 
   async function handleMsg(raw) {
-    let msg
-    try {
-      msg = JSON.parse(raw)
-    } catch {
-      return
+    // syncFromMap hands us an ALREADY-parsed object; tolerate a raw JSON string too.
+    let msg = raw
+    if (typeof msg === 'string') {
+      try {
+        msg = JSON.parse(msg)
+      } catch {
+        return
+      }
     }
+    if (!msg || !msg.type) return
     const { type, sdp } = msg
     if (type === 'offer') {
       // dedupe: the re-poll below can hand us the SAME offer again; if a pc
@@ -331,6 +338,11 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
       }
     })
     setParts(next)
+    // Don't touch WebRTC signaling until our own media track exists: offering
+    // or answering with no tracks produces a trackless SDP that gathers ZERO
+    // ICE candidates (the exact cands=0 failure we traced). The 2.5s re-poll
+    // and grab()'s explicit call pick everything up the instant media lands.
+    if (!mediaReady.current) return
     for (const { from, body } of msgs) {
       if (body.type === 'offer') handleMsg({ ...body, _from: from })
       else if (body.type === 'answer') handleMsg({ ...body, _from: from })
