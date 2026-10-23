@@ -2726,6 +2726,45 @@ body::after {
   max-width: calc(100vw - 6rem);
   animation: claim-in 0.25s ease;
 }
+/* 🖐 drag handle — grab the whole call box and move it anywhere */
+.call-grip {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 22px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(6, 8, 20, 0.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--muted);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.call-grip:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.call-grip:active {
+  cursor: grabbing;
+}
+.call-grip-dots {
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+.call-grip-hint {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.75;
+}
 .call-tiles {
   display: flex;
   flex-wrap: wrap;

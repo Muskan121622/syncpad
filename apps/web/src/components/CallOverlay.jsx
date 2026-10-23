@@ -80,6 +80,9 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   const [camOn, setCamOn] = useState(true)
   const [sharing, setSharing] = useState(false)
   const [pinned, setPinned] = useState(null) // 'self' | peerId — big-picture spotlight
+    const stripRef = useRef(null)
+    const [pos, setPos] = useState(null) // 🖐 call-box position {x,y} once dragged (null = default bottom-right)
+    const dragRef = useRef(null)
   const localStream = useRef(null)
   const screenStream = useRef(null)
   const pcs = useRef(new Map()) // peerId -> RTCPeerConnection
@@ -699,6 +702,29 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     for (const k of [...call.keys()]) if (k.startsWith('d:')) call.delete(k)
   }
 
+  // 🖐 drag the whole call box anywhere on screen (grip → pointer capture)
+  function onGripDown(e) {
+    const el = stripRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origLeft: r.left, origTop: r.top, w: r.width, h: r.height }
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+  }
+  function onGripMove(e) {
+    const d = dragRef.current
+    if (!d) return
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const x = Math.max(6, Math.min(d.origLeft + (e.clientX - d.startX), vw - d.w - 6))
+    const y = Math.max(6, Math.min(d.origTop + (e.clientY - d.startY), vh - d.h - 6))
+    setPos({ x, y })
+  }
+  function onGripUp(e) {
+    dragRef.current = null
+    e.currentTarget?.releasePointerCapture?.(e.pointerId)
+  }
+  const stripStyle = pos ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto' } : undefined
+
   return (
     <>
       {/* 📌 big-picture spotlight — click backdrop or ✕ to drop back to tiles */}
@@ -835,7 +861,18 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
           </div>
         </div>
       )}
-      <div className="call-strip">
+      <div className="call-strip" ref={stripRef} style={stripStyle}>
+        <div
+          className="call-grip"
+          onPointerDown={onGripDown}
+          onPointerMove={onGripMove}
+          onPointerUp={onGripUp}
+          onPointerCancel={onGripUp}
+          title="drag me — move the call box anywhere"
+        >
+          <span className="call-grip-dots">⣿⣿</span>
+          <span className="call-grip-hint">drag</span>
+        </div>
       {streamErr && <div className="call-err">{streamErr}</div>}
       <div className="call-tiles">
         {/* self tile — always muted (echo police 🚨) */}
