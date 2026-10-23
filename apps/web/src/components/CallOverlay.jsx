@@ -80,9 +80,8 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
   const [camOn, setCamOn] = useState(true)
   const [sharing, setSharing] = useState(false)
   const [pinned, setPinned] = useState(null) // 'self' | peerId — big-picture spotlight
-    const stripRef = useRef(null)
-    const [pos, setPos] = useState(null) // 🖐 call-box position {x,y} once dragged (null = default bottom-right)
-    const dragRef = useRef(null)
+  const [floats, setFloats] = useState({}) // 🖐 per-tile free positions: key -> {x,y}
+  const dragTile = useRef(null)
   const localStream = useRef(null)
   const screenStream = useRef(null)
   const pcs = useRef(new Map()) // peerId -> RTCPeerConnection
@@ -702,28 +701,36 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
     for (const k of [...call.keys()]) if (k.startsWith('d:')) call.delete(k)
   }
 
-  // 🖐 drag the whole call box anywhere on screen (grip → pointer capture)
-  function onGripDown(e) {
-    const el = stripRef.current
-    if (!el) return
-    const r = el.getBoundingClientRect()
-    dragRef.current = { startX: e.clientX, startY: e.clientY, origLeft: r.left, origTop: r.top, w: r.width, h: r.height }
+  // 🖐 drag an individual tile free on screen — each video box floats on its own
+  function onTileGripDown(e, key) {
+    const tile = e.currentTarget.closest('.call-tile')
+    if (!tile) return
+    const r = tile.getBoundingClientRect()
+    dragTile.current = { key, startX: e.clientX, startY: e.clientY, origLeft: r.left, origTop: r.top, w: r.width, h: r.height }
     e.currentTarget.setPointerCapture?.(e.pointerId)
+    e.stopPropagation()
   }
-  function onGripMove(e) {
-    const d = dragRef.current
+  function onTileGripMove(e) {
+    const d = dragTile.current
     if (!d) return
     const vw = window.innerWidth
     const vh = window.innerHeight
-    const x = Math.max(6, Math.min(d.origLeft + (e.clientX - d.startX), vw - d.w - 6))
-    const y = Math.max(6, Math.min(d.origTop + (e.clientY - d.startY), vh - d.h - 6))
-    setPos({ x, y })
+    const x = Math.max(4, Math.min(d.origLeft + (e.clientX - d.startX), vw - d.w - 4))
+    const y = Math.max(4, Math.min(d.origTop + (e.clientY - d.startY), vh - d.h - 4))
+    setFloats((f) => ({ ...f, [d.key]: { x, y } }))
   }
-  function onGripUp(e) {
-    dragRef.current = null
+  function onTileGripUp(e) {
+    dragTile.current = null
     e.currentTarget?.releasePointerCapture?.(e.pointerId)
   }
-  const stripStyle = pos ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto' } : undefined
+  function dockTile(key) {
+    setFloats((f) => {
+      if (!(key in f)) return f
+      const next = { ...f }
+      delete next[key]
+      return next
+    })
+  }
 
   return (
     <>
@@ -861,23 +868,27 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
           </div>
         </div>
       )}
-      <div className="call-strip" ref={stripRef} style={stripStyle}>
-        <div
-          className="call-grip"
-          onPointerDown={onGripDown}
-          onPointerMove={onGripMove}
-          onPointerUp={onGripUp}
-          onPointerCancel={onGripUp}
-          title="drag me — move the call box anywhere"
-        >
-          <span className="call-grip-dots">⣿⣿</span>
-          <span className="call-grip-hint">drag</span>
-        </div>
+      <div className="call-strip">
       {streamErr && <div className="call-err">{streamErr}</div>}
       <div className="call-tiles">
         {/* self tile — always muted (echo police 🚨) */}
-        <div className={`call-tile is-self${camOn ? '' : ' is-camoff'}${sharing ? ' is-sharing' : ''}`}>
+        <div
+          className={`call-tile is-self${camOn ? '' : ' is-camoff'}${sharing ? ' is-sharing' : ''}${floats.self ? ' is-float' : ''}`}
+          style={floats.self ? { left: floats.self.x, top: floats.self.y } : undefined}
+        >
           <video ref={selfRef} autoPlay playsInline muted />
+          <div
+            className="call-tile-grip"
+            title="drag this tile · double-click to dock back"
+            onPointerDown={(e) => onTileGripDown(e, 'self')}
+            onPointerMove={onTileGripMove}
+            onPointerUp={onTileGripUp}
+            onPointerCancel={onTileGripUp}
+            onClick={(e) => e.stopPropagation()}
+            onDoubleClick={() => dockTile('self')}
+          >
+            ⣿
+          </div>
           <span className="call-name">
             {identity.emoji || '🧑‍🎓'} {identity.name} {sharing ? '· your screen' : '(you)'}
           </span>
@@ -908,7 +919,8 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
           return (
             <div
               key={id}
-              className={`call-tile${p.cam ? '' : ' is-camoff'}${p.share ? ' is-sharing' : ''}${conn === 'failed' ? ' is-retryable' : ''}`}
+              className={`call-tile${p.cam ? '' : ' is-camoff'}${p.share ? ' is-sharing' : ''}${conn === 'failed' ? ' is-retryable' : ''}${floats[id] ? ' is-float' : ''}`}
+              style={floats[id] ? { left: floats[id].x, top: floats[id].y } : undefined}
               onClick={() => {
                 if (conn === 'failed') return retryCall(Number(id))
                 const v = document.querySelector(`video[data-peer="${id}"]`)
@@ -925,6 +937,18 @@ export default function CallOverlay({ call, identity, myClientId, onlineIds, onL
                 playsInline
                 ref={(el) => el && attachVideo(Number(id))}
               />
+              <div
+                className="call-tile-grip"
+                title="drag this tile · double-click to dock back"
+                onPointerDown={(e) => onTileGripDown(e, id)}
+                onPointerMove={onTileGripMove}
+                onPointerUp={onTileGripUp}
+                onPointerCancel={onTileGripUp}
+                onClick={(e) => e.stopPropagation()}
+                onDoubleClick={() => dockTile(id)}
+              >
+                ⣿
+              </div>
               <span className={`call-diag is-${conn}`}>{badge}</span>
               <span className="call-name">
                 {p.emoji} {p.name}
